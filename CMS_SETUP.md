@@ -8,7 +8,7 @@ CMS를 이용해 블로그 페이지에서 글을 작성하고 이미지를 올�
 
 ## 새 글 작성
 
-1. [글쓰기 화면](https://jeus1998.github.io/admin/)에 접속해 **Continue with GitHub**로 로그인합니다. Decap Turbo 로그인은 GitHub 계정으로 인증합니다.
+1. [글쓰기 화면](https://jeus1998.github.io/admin/)에 접속해 **Login with Turbo**로 로그인합니다. Decap Turbo 로그인은 GitHub 계정으로 인증합니다.
 2. 왼쪽에서 **글**을 고르고 **새 글**을 누릅니다.
 3. 제목, 게시 날짜, 분류, 태그, 한 줄 소개를 입력합니다. 분류와 태그는 필요할 때만 추가해도 됩니다.
 4. 본문을 작성합니다. 제목과 본문은 필수입니다.
