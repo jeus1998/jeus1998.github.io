@@ -1,0 +1,24 @@
+---
+layout: default
+---
+{% assign category_posts = site.posts | where_exp: "post", "post.categories contains page.title" %}
+<section class="category-page">
+  <a class="back-link" href="{{ '/categories/' | relative_url }}">← 카테고리 전체 보기</a>
+  <header class="archive-header">
+    <p class="eyebrow">CATEGORY</p>
+    <h1>{{ page.title }}</h1>
+    {% if page.description %}<p>{{ page.description }}</p>{% endif %}
+  </header>
+  <form class="post-search archive-search" role="search" data-post-search>
+    <label class="visually-hidden" for="post-search-input">이 카테고리에서 글 검색</label>
+    <input id="post-search-input" type="search" placeholder="{{ page.title }} 카테고리에서 검색" autocomplete="off">
+    <span class="search-icon" aria-hidden="true">⌕</span>
+  </form>
+  <div class="section-heading post-results-heading"><h2>글 목록</h2><span class="post-count" data-post-count>{{ category_posts.size }}개의 글</span></div>
+  <div class="post-list" data-post-list>
+    {% for post in category_posts %}
+      {% include post-row.html post=post %}
+    {% endfor %}
+  </div>
+  <p class="empty-state" data-no-results hidden>검색 결과가 없습니다. 다른 검색어를 입력해 보세요.</p>
+</section>
