@@ -1,0 +1,19 @@
+{% assign post = include.post %}
+{% capture search_content %}{{ post.title }} {{ post.description }} {{ post.excerpt | strip_html }} {{ post.content | strip_html }} {% for category_name in post.categories %}{{ category_name }} {% endfor %} {% for tag in post.tags %}{{ tag }} {% endfor %}{% endcapture %}
+<article class="post-row" data-post-row data-search="{{ search_content | normalize_whitespace | escape }}">
+  <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%Y.%m.%d' }}</time>
+  <div class="post-summary">
+    {% if post.categories.size > 0 %}
+    <div class="category-list">
+      {% for category_name in post.categories %}
+        {% assign category_doc = site.blog_categories | where: "title", category_name | first %}
+        {% if category_doc %}<a class="category-chip" href="{{ category_doc.url | relative_url }}">{{ category_doc.title }}</a>{% else %}<span class="category-chip">{{ category_name }}</span>{% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+    <p>{{ post.description | default: post.excerpt | strip_html | truncate: 110 }}</p>
+    {% if post.tags.size > 0 %}<div class="tag-list">{% for tag in post.tags %}<span>#{{ tag }}</span>{% endfor %}</div>{% endif %}
+  </div>
+  <a class="row-arrow" href="{{ post.url | relative_url }}" aria-label="{{ post.title }} 읽기">↗</a>
+</article>
