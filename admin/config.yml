@@ -67,6 +67,6 @@ collections:
       - label: 본문 (Markdown)
         name: body
         widget: richtext
-        modes: [raw]
+        modes: [raw, rich_text]
         editor_components: [image, code-block]
-        hint: 'Markdown을 직접 작성하세요. 이미지 파일을 이 편집 영역으로 끌어 놓거나, 이미지 삽입 도구를 사용하세요. 예: ![설명](/assets/images/경로/파일.webp)'
+        hint: 'Markdown 모드가 기본입니다. 이미지는 리치 텍스트 모드로 잠시 전환해 드래그하거나 이미지 도구로 올린 뒤, Markdown 모드로 돌아와 링크를 확인하세요.'
