@@ -1,0 +1,19 @@
+title: Jeus Log
+description: 배우고 만들며 쌓아가는 개발 기록
+url: "https://jeus1998.github.io"
+baseurl: ""
+lang: ko-KR
+locale: ko_KR
+author:
+  name: jeus1998
+  bio: 배우고 만들며 쌓아가는 개발 기록
+  github: jeus1998
+markdown: kramdown
+permalink: /:categories/:year/:month/:day/:title/
+header_pages:
+  - about.md
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
