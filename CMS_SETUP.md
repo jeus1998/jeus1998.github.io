@@ -1,23 +1,28 @@
-# CMS 로그인 연결 안내
+# CMS 사용 안내
 
-CMS 화면은 `/admin/`에 있고, GitHub 저장소를 CMS 저장소로 사용합니다. GitHub Pages는 정적 파일만 제공하므로 CMS 인증에는 별도 인증 백엔드가 필요합니다. 이 사이트는 OAuth 서버를 직접 운영하지 않아도 되는 Decap Turbo를 사용하도록 준비되어 있습니다.
+CMS를 이용해 블로그 페이지에서 글을 작성하고 이미지를 올릴 수 있습니다.
 
-## 최초 한 번 연결하기
+- 블로그: https://jeus1998.github.io/
+- 글쓰기: https://jeus1998.github.io/admin/
+- 저장소: https://github.com/jeus1998/jeus1998.github.io
 
-1. [Decap Turbo 설정 안내](https://decapcms.org/docs/turbo-getting-started/)를 열고 Decap Turbo 계정을 만듭니다. 약관 동의가 나오면 내용을 확인한 뒤 직접 동의해 주세요.
-2. Turbo 대시보드에서 조직을 만들고 **Git connection**에서 GitHub를 연결합니다.
-3. GitHub 앱 설치 화면에서는 전체 저장소 대신 `jeus1998/jeus1998.github.io`만 선택합니다. CMS는 새 글과 이미지를 이 저장소에 커밋하므로 해당 저장소에 대한 쓰기 권한이 필요합니다.
-4. Turbo에서 사이트를 추가하고 다음 값을 지정합니다.
-   - Git provider: GitHub
-   - Repository: `jeus1998/jeus1998.github.io`
-   - Branch: `main`
-   - Config path: `admin/config.yml`
-   - Admin interface URL: `https://jeus1998.github.io/admin/`
-5. 생성된 Site ID(UUID)를 복사해 `admin/config.yml`의 `backend.turbo_site_id`에 있는 `SETUP_REQUIRED`를 바꿉니다.
-6. `main`에 커밋하면 Pages가 다시 배포됩니다. 이후 `https://jeus1998.github.io/admin/`에서 로그인해 글을 작성할 수 있습니다.
+## 새 글 작성
 
-## 이미지 저장 위치
+1. [글쓰기 화면](https://jeus1998.github.io/admin/)에 접속해 **Continue with GitHub**로 로그인합니다. Decap Turbo 로그인은 GitHub 계정으로 인증합니다.
+2. 왼쪽에서 **글**을 고르고 **새 글**을 누릅니다.
+3. 제목, 게시 날짜, 분류, 태그, 한 줄 소개를 입력합니다. 분류와 태그는 필요할 때만 추가해도 됩니다.
+4. 본문을 작성합니다. 제목과 본문은 필수입니다.
+5. 이미지를 넣으려면 본문에서 원하는 위치에 이미지를 끌어다 놓습니다. 이미지 버튼을 사용해 파일을 선택하는 방법도 있습니다.
+6. 미리보기에서 글과 이미지 배치를 확인한 뒤 **Publish**를 누릅니다. 변경 사항이 GitHub 저장소에 커밋되고 GitHub Pages가 사이트를 다시 빌드합니다. 배포가 끝나면 공개 블로그에 나타납니다.
 
-본문에 이미지를 드래그하면 CMS가 WebP로 변환하고, 해당 글의 날짜와 주소를 사용한 폴더에 저장합니다. 예: `assets/images/2026/11/24/spring-batch-retry/`. 글마다 폴더가 달라서 서로 다른 글에서 같은 파일명을 써도 경로가 겹치지 않습니다. CMS가 업로드 파일명을 URL에 쓸 수 있게 정리합니다.
+## 이미지 저장과 이름
 
-현재 CMS 기본 업로더는 같은 글 폴더 안에서 같은 파일명을 다시 올리면 교체 여부를 확인합니다. 새 이미지로 교체하고 싶다면 원본 파일명을 바꾼 뒤 올려 주세요.
+CMS는 업로드한 이미지를 WebP로 변환하고, 가로 폭을 최대 1600px로 줄이며, 메타데이터를 제거합니다. 파일은 글별 폴더에 저장됩니다. 예: `assets/images/2026/11/24/spring-batch-retry/`.
+
+글마다 폴더가 달라서 서로 다른 글에서 같은 파일명을 사용해도 저장 경로가 겹치지 않습니다. 파일명은 URL에 사용할 수 있도록 정리됩니다. 같은 글 폴더 안에 같은 이름의 이미지를 다시 올리면 CMS가 교체 여부를 확인합니다. 별도 이미지로 보관하려면 업로드 전에 파일명을 다르게 바꿔 주세요.
+
+## 비용과 연결 범위
+
+현재 Decap Turbo는 **Free 플랜**으로 연결했습니다. 사이트 1개와 소유자 1명을 포함하고, 카드 등록 없이 계속 사용할 수 있습니다. 14일 Pro 체험판은 시작하지 않았습니다.
+
+GitHub 앱은 `jeus1998/jeus1998.github.io` 저장소 하나에만 설치했습니다. 이미지와 글은 이 공개 저장소에 저장되므로 저장소의 파일은 누구나 볼 수 있습니다.
