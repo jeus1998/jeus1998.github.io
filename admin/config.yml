@@ -27,6 +27,31 @@ slug:
   sanitize_replacement: "-"
 
 collections:
+  - name: blog_categories
+    label: 카테고리
+    label_singular: 카테고리
+    folder: _blog_categories
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{fields.slug}}"
+    slug_collision: suffix
+    fields:
+      - label: 레이아웃
+        name: layout
+        widget: hidden
+        default: category
+      - label: 카테고리 이름
+        name: title
+        widget: string
+      - label: 영문 URL 주소
+        name: slug
+        widget: string
+        hint: '짧은 영문 주소를 입력하세요. 예: spring, java, records'
+      - label: 소개
+        name: description
+        widget: text
+        required: false
   - name: posts
     label: 글
     label_singular: 글
@@ -52,9 +77,14 @@ collections:
         format: "YYYY-MM-DD HH:mm:ss ZZ"
         date_format: "YYYY-MM-DD"
         time_format: "HH:mm"
-      - label: 분류
+      - label: 카테고리
         name: categories
-        widget: list
+        widget: relation
+        collection: blog_categories
+        value_field: title
+        search_fields: [title]
+        display_fields: [title]
+        multiple: true
         required: false
       - label: 태그
         name: tags
