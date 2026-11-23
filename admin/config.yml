@@ -1,0 +1,69 @@
+backend:
+  name: turbo-github
+  # Replace this placeholder with the site UUID from the Decap Turbo dashboard.
+  turbo_site_id: SETUP_REQUIRED
+  branch: main
+
+site_url: https://jeus1998.github.io
+display_url: https://jeus1998.github.io
+locale: ko
+publish_mode: simple
+
+media_folder: assets/images
+public_folder: /assets/images
+media_processing:
+  enabled: true
+  format:
+    enabled: true
+    default: webp
+  quality: 82
+  strip_metadata: true
+  width: 1600
+  height: null
+
+slug:
+  encoding: ascii
+  clean_accents: true
+  sanitize_replacement: "-"
+
+collections:
+  - name: posts
+    label: 글
+    label_singular: 글
+    folder: _posts
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    slug_collision: suffix
+    media_folder: "assets/images/{{year}}/{{month}}/{{day}}/{{slug}}"
+    public_folder: "/assets/images/{{year}}/{{month}}/{{day}}/{{slug}}"
+    fields:
+      - label: 레이아웃
+        name: layout
+        widget: hidden
+        default: post
+      - label: 제목
+        name: title
+        widget: string
+      - label: 게시 날짜
+        name: date
+        widget: datetime
+        format: "YYYY-MM-DD HH:mm:ss ZZ"
+        date_format: "YYYY-MM-DD"
+        time_format: "HH:mm"
+      - label: 분류
+        name: categories
+        widget: list
+        required: false
+      - label: 태그
+        name: tags
+        widget: list
+        required: false
+      - label: 한 줄 소개
+        name: description
+        widget: text
+        required: false
+      - label: 본문
+        name: body
+        widget: markdown
