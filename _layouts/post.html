@@ -1,0 +1,15 @@
+---
+layout: default
+---
+<article class="article">
+  <a class="back-link" href="{{ '/' | relative_url }}">← 모든 글</a>
+  <header class="article-header">
+    <div class="eyebrow">{% for category in page.categories %}<span>{{ category }}</span>{% endfor %}<span>{{ page.date | date: '%Y.%m.%d' }}</span></div>
+    <h1>{{ page.title }}</h1>
+    {% if page.description %}<p class="article-deck">{{ page.description }}</p>{% endif %}
+    <div class="reading-time">{{ page.content | number_of_words | divided_by: 200 | at_least: 1 }}분 읽기</div>
+  </header>
+  <div class="prose">{{ content }}</div>
+  {% if page.tags.size > 0 %}<div class="tag-list article-tags">{% for tag in page.tags %}<span>#{{ tag }}</span>{% endfor %}</div>{% endif %}
+  <nav class="article-bottom" aria-label="다른 글"><a href="{{ '/' | relative_url }}">← 글 목록으로 돌아가기</a></nav>
+</article>
