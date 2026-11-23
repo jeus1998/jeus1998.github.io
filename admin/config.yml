@@ -1,7 +1,7 @@
 backend:
   name: turbo-github
-  # Replace this placeholder with the site UUID from the Decap Turbo dashboard.
-  turbo_site_id: SETUP_REQUIRED
+  # Site ID from the Decap Turbo dashboard.
+  turbo_site_id: 505a9f15-42dd-439b-a05d-e5768d9d4b9a
   branch: main
 
 site_url: https://jeus1998.github.io
