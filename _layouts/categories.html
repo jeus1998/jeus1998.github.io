@@ -1,0 +1,23 @@
+---
+layout: default
+---
+<section class="categories-page">
+  <a class="back-link" href="{{ '/' | relative_url }}">← 모든 글</a>
+  <header class="archive-header">
+    <p class="eyebrow">BROWSE BY CATEGORY</p>
+    <h1>카테고리</h1>
+    <p>관심 있는 주제별로 글을 모아볼 수 있습니다.</p>
+  </header>
+  {% assign categories = site.blog_categories | sort: "title" %}
+  <div class="category-grid">
+    {% for category in categories %}
+      {% assign category_posts = site.posts | where_exp: "post", "post.categories contains category.title" %}
+      <a class="category-card" href="{{ category.url | relative_url }}">
+        <span class="category-card-icon" aria-hidden="true">#</span>
+        <span class="category-card-title">{{ category.title }}</span>
+        <span class="category-card-count">{{ category_posts.size }}개의 글</span>
+        {% if category.description %}<span class="category-card-description">{{ category.description }}</span>{% endif %}
+      </a>
+    {% endfor %}
+  </div>
+</section>
