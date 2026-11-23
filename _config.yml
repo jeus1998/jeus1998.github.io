@@ -12,6 +12,10 @@ markdown: kramdown
 permalink: /:categories/:year/:month/:day/:title/
 header_pages:
   - about.md
+collections:
+  blog_categories:
+    output: true
+    permalink: /categories/:name/
 exclude:
   - README.md
   - Gemfile
