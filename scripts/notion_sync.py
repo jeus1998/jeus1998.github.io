@@ -17,10 +17,11 @@ import requests
 ROOT_ID = os.environ.get("NOTION_ROOT_PAGE_ID", "d19bec251d44498c8c53ac994966d82d")
 PAGE_ID = os.environ.get("NOTION_PAGE_ID", "").strip()
 PAGE_IDS = os.environ.get("NOTION_PAGE_IDS", "").strip()
-SELECTED_PAGE_IDS = list(dict.fromkeys(
-    [value.replace("-", "") for value in re.split(r"[\s,;]+", PAGE_IDS) if value]
-    + ([PAGE_ID.replace("-", "")] if PAGE_ID else [])
-))
+PAGE_ID_TOKENS = [value for value in re.split(r"[\s,;]+", PAGE_IDS) if value]
+if PAGE_ID:
+    PAGE_ID_TOKENS.append(PAGE_ID)
+EXACT_PAGE_IDS = {value[1:].replace("-", "") for value in PAGE_ID_TOKENS if value.startswith("!")}
+SELECTED_PAGE_IDS = list(dict.fromkeys(value.removeprefix("!").replace("-", "") for value in PAGE_ID_TOKENS))
 TOKEN = os.environ["NOTION_API_KEY"]
 API = "https://api.notion.com/v1"
 VERSION = "2022-06-28"
@@ -464,7 +465,8 @@ category_titles: set[str] = set()
 written_categories: set[Path] = set()
 
 
-def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[str, dict]) -> None:
+def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[str, dict],
+         recurse: bool = True) -> None:
     page_id = page_id.replace("-", "")
     if page_id in seen:
         return
@@ -515,8 +517,9 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[
         remove_post_for_page(page_id)
 
     next_parents = parents + [(title, page_record)]
-    for child in subpages:
-        walk(child["id"], child.get("child_page", {}).get("title", "제목 없음"), next_parents, index)
+    if recurse:
+        for child in subpages:
+            walk(child["id"], child.get("child_page", {}).get("title", "제목 없음"), next_parents, index)
 
 
 def main() -> None:
@@ -550,7 +553,8 @@ def main() -> None:
     candidates = set()
     for selected_id in SELECTED_PAGE_IDS:
         candidates.add(selected_id)
-        candidates.update(page_id for page_id in index if selected_id in {a[1]["id"] for a in page_ancestors(page_id, index)})
+        if selected_id not in EXACT_PAGE_IDS:
+            candidates.update(page_id for page_id in index if selected_id in {a[1]["id"] for a in page_ancestors(page_id, index)})
     if old_pages:
         for page_id, item in index.items():
             previous = old_pages.get(page_id)
@@ -568,7 +572,10 @@ def main() -> None:
 
     # Import only the topmost candidate in each changed subtree. New pages
     # are discovered automatically; existing unimported pages stay staged.
-    roots = [page_id for page_id in candidates if not any(ancestor[1]["id"] in candidates for ancestor in page_ancestors(page_id, index))]
+    roots = [page_id for page_id in candidates if not any(
+        ancestor[1]["id"] in candidates and ancestor[1]["id"] not in EXACT_PAGE_IDS
+        for ancestor in page_ancestors(page_id, index)
+    )]
     for page_id in roots:
         ancestors = page_ancestors(page_id, index)
         for i, (ancestor_title, ancestor) in enumerate(ancestors):
@@ -581,11 +588,14 @@ def main() -> None:
                 category_titles.add(ancestor_title)
                 written_categories.add(CATEGORIES / f"notion-{slug_id(ancestor_id)}.md")
         page = api(f"pages/{page_id}")
-        walk(page_id, page_title(page), ancestors, index)
+        walk(page_id, page_title(page), ancestors, index, recurse=page_id not in EXACT_PAGE_IDS)
 
     # Save the complete inventory, preserving the staged-import flag.
     for page_id, item in index.items():
-        item["imported"] = bool(old_pages.get(page_id, {}).get("imported")) or any(page_id == root or root in {a[1]["id"] for a in page_ancestors(page_id, index)} for root in roots)
+        item["imported"] = bool(old_pages.get(page_id, {}).get("imported")) or any(
+            page_id == root or (root not in EXACT_PAGE_IDS and root in {a[1]["id"] for a in page_ancestors(page_id, index)})
+            for root in roots
+        )
     for category_file in CATEGORIES.glob("notion-*.md"):
         category_id = category_file.stem.removeprefix("notion-")
         if category_id in index and not index[category_id]["children"] and category_id != ROOT_ID.replace("-", ""):
