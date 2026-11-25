@@ -10,27 +10,7 @@ coding_test_id: "programmers-17680"
 ---
 이 글은 [jeus1998/coding-test](https://github.com/jeus1998/coding-test/tree/main/%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%A8%B8%EC%8A%A4/2/17680.%E2%80%85%EF%BC%BB1%EC%B0%A8%EF%BC%BD%E2%80%85%EC%BA%90%EC%8B%9C) 저장소의 풀이를 자동으로 가져온 기록입니다. 원본은 [Java 파일](https://github.com/jeus1998/coding-test/blob/main/%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%A8%B8%EC%8A%A4/2/17680.%E2%80%85%EF%BC%BB1%EC%B0%A8%EF%BC%BD%E2%80%85%EC%BA%90%EC%8B%9C/%EF%BC%BB1%EC%B0%A8%EF%BC%BD%E2%80%85%EC%BA%90%EC%8B%9C.java)에서 확인할 수 있습니다.
 
-## 문제 설명
-
-# [level 2] [1차] 캐시 - 17680 
-
-[문제 링크](https://school.programmers.co.kr/learn/courses/30/lessons/17680) 
-
-### 성능 요약
-
-메모리: 124 MB, 시간: 41.84 ms
-
-### 구분
-
-코딩테스트 연습 > 2018 KAKAO BLIND RECRUITMENT
-
-### 채점결과
-
-정확성: 100.0<br/>합계: 100.0 / 100.0
-
-### 제출 일자
-
-2026년 11월 13일 22:43:07
+## 문제
 
 ### 문제 설명
 

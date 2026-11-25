@@ -10,23 +10,7 @@ coding_test_id: "boj-2577"
 ---
 이 글은 [jeus1998/coding-test](https://github.com/jeus1998/coding-test/tree/main/%EB%B0%B1%EC%A4%80/Bronze/2577.%E2%80%85%EC%88%AB%EC%9E%90%EC%9D%98%E2%80%85%EA%B0%9C%EC%88%98) 저장소의 풀이를 자동으로 가져온 기록입니다. 원본은 [Java 파일](https://github.com/jeus1998/coding-test/blob/main/%EB%B0%B1%EC%A4%80/Bronze/2577.%E2%80%85%EC%88%AB%EC%9E%90%EC%9D%98%E2%80%85%EA%B0%9C%EC%88%98/%EC%88%AB%EC%9E%90%EC%9D%98%E2%80%85%EA%B0%9C%EC%88%98.java)에서 확인할 수 있습니다.
 
-## 문제 설명
-
-# [Bronze II] 숫자의 개수 - 2577 
-
-[문제 링크](https://acmicpc.net/problem/2577) 
-
-### 성능 요약
-
-메모리: 14412 KB, 시간: 96 ms
-
-### 분류
-
-사칙연산, 구현, 수학
-
-### 제출 일자
-
-2026년 11월 25일 13:49:01
+## 문제
 
 ### 문제 설명
 
@@ -41,8 +25,6 @@ coding_test_id: "boj-2577"
 ### 출력 
 
  <p>첫째 줄에는 A × B × C의 결과에 0 이 몇 번 쓰였는지 출력한다. 마찬가지로 둘째 줄부터 열 번째 줄까지 A × B × C의 결과에 1부터 9까지의 숫자가 각각 몇 번 쓰였는지 차례로 한 줄에 하나씩 출력한다.</p>
-
-
 
 ## 풀이 코드
 
