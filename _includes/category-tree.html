@@ -5,7 +5,7 @@
   {% assign category_parent_id = category.parent_notion_id | default: "" %}
   {% assign category_parent_title = category.parent | default: "" %}
   {% if category.notion_id and category_parent_id == parent_id %}
-    {% unless parent_id == "" and parent_title != "" %}{% assign rendered = true %}{% endunless %}
+    {% unless parent_id == blank and parent_title != blank %}{% assign rendered = true %}{% endunless %}
   {% elsif category.notion_id == nil and category_parent_title == parent_title %}{% assign rendered = true %}{% endif %}
 {% endfor %}
 {% if rendered %}
@@ -15,7 +15,7 @@
     {% assign category_parent_title = category.parent | default: "" %}
     {% assign is_child = false %}
     {% if category.notion_id and category_parent_id == parent_id %}
-      {% unless parent_id == "" and parent_title != "" %}{% assign is_child = true %}{% endunless %}
+      {% unless parent_id == blank and parent_title != blank %}{% assign is_child = true %}{% endunless %}
     {% elsif category.notion_id == nil and category_parent_title == parent_title %}{% assign is_child = true %}{% endif %}
     {% if is_child %}
     {% assign category_posts = site.posts | where_exp: "post", "post.categories contains category.title" %}

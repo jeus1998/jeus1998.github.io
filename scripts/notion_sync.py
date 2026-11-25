@@ -433,8 +433,11 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
                  f"categories: {categories_yaml}", "tags: [Notion 가져오기]",
                  f"description: {yaml_quote('Study Record에서 가져온 기록입니다.')}",
                  f"notion_id: {page_id}", f"notion_path: {yaml_quote(breadcrumb)}",
-                 f"notion_category_ids: {category_ids_yaml}", "---", ""]
-        post_path.write_text("\n".join(front) + body + "\n", encoding="utf-8")
+                 f"notion_category_ids: {category_ids_yaml}", "---", "", "{% raw %}"]
+        # Notion content is user-authored Markdown, so Liquid-like examples
+        # (for example GitHub Actions `${{ secrets.NAME }}` or Java array braces)
+        # must remain literal instead of being parsed as Jekyll template syntax.
+        post_path.write_text("\n".join(front) + body + "\n{% endraw %}\n", encoding="utf-8")
         written.add(post_path)
     elif subpages:
         remove_post_for_page(page_id)
