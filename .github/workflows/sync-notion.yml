@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: notion-sync
@@ -15,6 +17,9 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -44,14 +49,33 @@ jobs:
           NOTION_ROOT_PAGE_ID: d19bec251d44498c8c53ac994966d82d
         run: python scripts/notion_sync.py
       - name: Commit updated posts
+        id: commit
         if: steps.setup.outputs.ready == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add _posts _blog_categories assets/images/notion
+          git add -A
           if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No Notion changes to publish."
           else
             git commit -m "Sync Study Record from Notion"
             git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Configure Pages
+        if: steps.setup.outputs.ready == 'true' && steps.commit.outputs.changed == 'true'
+        uses: actions/configure-pages@v5
+      - name: Build with Jekyll
+        if: steps.setup.outputs.ready == 'true' && steps.commit.outputs.changed == 'true'
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Upload Pages artifact
+        if: steps.setup.outputs.ready == 'true' && steps.commit.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v4
+      - name: Deploy to GitHub Pages
+        if: steps.setup.outputs.ready == 'true' && steps.commit.outputs.changed == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4
