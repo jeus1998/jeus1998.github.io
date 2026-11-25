@@ -32,6 +32,14 @@
 .category-card-count{margin-top:2px;color:#879087;font:10px 'DM Mono',monospace}
 .category-card-description{margin-top:9px;color:#7a837a;font-size:11px}
 .category-page .archive-header{padding-top:30px}
+.category-tree-list{display:grid;gap:8px;margin:18px 0 34px;padding:0;list-style:none}
+.category-tree-list li{min-width:0}
+.category-tree-list>li>a,.category-tree-list li>a{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none}
+.category-tree-list a:hover{border-color:#b9cbb8;background:#f8faf7}
+.category-tree-list a span{font-size:14px;font-weight:600}
+.category-tree-list a small{flex:none;color:#879087;font:10px 'DM Mono',monospace}
+.category-tree-list .category-tree-list{margin:7px 0 8px 17px;padding-left:12px;border-left:1px solid var(--line)}
+.notion-breadcrumb{margin:8px 0 0;color:#89918a;font-size:11px}
 .archive-search{margin:0 0 32px}
 .article-meta{display:flex;align-items:center;gap:12px;color:#929a92;font:10px 'DM Mono',monospace}
 .article-meta .category-chip{font-family:var(--sans);font-size:9px}
