@@ -89,6 +89,7 @@ def download_notion_file(block: dict, file_obj: dict) -> str:
     target = MEDIA / f"{block_id}{ext}"
     if not target.exists() or target.read_bytes() != response.content:
         target.write_bytes(response.content)
+    written_media.add(target)
     return f"/assets/images/notion/{target.name}"
 
 
@@ -195,6 +196,7 @@ def save_category(page: dict, title: str, parent_title: str = "") -> None:
 
 seen: set[str] = set()
 written: set[Path] = set()
+written_media: set[Path] = set()
 category_titles: set[str] = set()
 written_categories: set[Path] = set()
 
@@ -248,7 +250,12 @@ def main() -> None:
     for path in CATEGORIES.glob("notion-*.md"):
         if path not in written_categories:
             path.unlink()
-    print(f"Synced {len(written)} pages and {len(category_titles)} categories from Notion.")
+    # This directory is owned by the importer. Remove downloaded attachments no longer
+    # referenced by any page after the full Notion tree has been fetched successfully.
+    for path in MEDIA.glob("*"):
+        if path.is_file() and path not in written_media:
+            path.unlink()
+    print(f"Synced {len(written)} pages, {len(category_titles)} categories, and {len(written_media)} media files from Notion.")
 
 
 if __name__ == "__main__":
