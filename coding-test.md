@@ -13,21 +13,17 @@ permalink: /coding-test/
   <section class="algorithm-profile" aria-labelledby="algorithm-profile-heading">
     <div class="algorithm-profile-heading">
       <div><p class="eyebrow">ALGORITHM PROFILE</p><h2 id="algorithm-profile-heading">알고리즘 프로필</h2></div>
-      <a class="text-link" href="https://github.com/jeus1998/Algorithm" target="_blank" rel="noreferrer">Algorithm 저장소 ↗</a>
+
     </div>
     <div class="algorithm-badges">
-      <a class="algorithm-badge" href="https://github.com/jeus1998/Algorithm" target="_blank" rel="noreferrer">
+      <div class="algorithm-badge">
         <span>Programmers</span>
         <img src="https://raw.githubusercontent.com/jeus1998/Algorithm/main/lib/result.svg" alt="Programmers 프로필 배지" loading="lazy">
-      </a>
-      <a class="algorithm-badge" href="https://solved.ac/profile/baejeu" target="_blank" rel="noreferrer">
-        <span>Baekjoon · baejeu</span>
-        <img src="https://mazassumnida.wtf/api/v2/generate_badge?boj=baejeu" alt="baejeu 백준 프로필 배지" loading="lazy">
-      </a>
-      <a class="algorithm-badge" href="https://solved.ac/profile/zeus20240228" target="_blank" rel="noreferrer">
+      </div>
+      <div class="algorithm-badge">
         <span>Baekjoon · zeus20240228</span>
         <img src="https://mazassumnida.wtf/api/v2/generate_badge?boj=zeus20240228" alt="zeus20240228 백준 프로필 배지" loading="lazy">
-      </a>
+      </div>
     </div>
   </section>
   <div class="coding-browser" data-coding-browser data-source="{{ '/assets/data/coding-test-files.json' | relative_url }}">
