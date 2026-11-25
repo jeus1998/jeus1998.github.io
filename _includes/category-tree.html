@@ -1,0 +1,12 @@
+{% assign children = include.categories | where_exp: "item", "item.parent == include.parent" %}
+{% if children.size > 0 %}
+<ul class="category-tree-list">
+  {% for category in children %}
+    {% assign category_posts = site.posts | where_exp: "post", "post.categories contains category.title" %}
+    <li>
+      <a href="{{ category.url | relative_url }}"><span>{{ category.title }}</span><small>{{ category_posts.size }}개의 글</small></a>
+      {% include category-tree.html categories=include.categories parent=category.title %}
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
