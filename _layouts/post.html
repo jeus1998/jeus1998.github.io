@@ -15,6 +15,7 @@ layout: default
     </div>
     <h1>{{ page.title }}</h1>
     {% if page.description %}<p class="article-deck">{{ page.description }}</p>{% endif %}
+    {% if page.notion_path %}<p class="notion-breadcrumb">Study Record / {{ page.notion_path }}</p>{% endif %}
     <div class="reading-time">{{ page.content | number_of_words | divided_by: 200 | at_least: 1 }}분 읽기</div>
   </header>
   <div class="prose">{{ content }}</div>
