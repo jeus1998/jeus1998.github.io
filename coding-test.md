@@ -10,6 +10,26 @@ permalink: /coding-test/
     <p>저장소의 문제 목록과 README, Java 코드를 블로그에서 바로 찾아볼 수 있습니다. 새 풀이를 푸시하면 자동으로 갱신됩니다.</p>
     <a class="text-link" href="https://github.com/jeus1998/coding-test" target="_blank" rel="noreferrer">GitHub 저장소 열기 ↗</a>
   </header>
+  <section class="algorithm-profile" aria-labelledby="algorithm-profile-heading">
+    <div class="algorithm-profile-heading">
+      <div><p class="eyebrow">ALGORITHM PROFILE</p><h2 id="algorithm-profile-heading">알고리즘 프로필</h2></div>
+      <a class="text-link" href="https://github.com/jeus1998/Algorithm" target="_blank" rel="noreferrer">Algorithm 저장소 ↗</a>
+    </div>
+    <div class="algorithm-badges">
+      <a class="algorithm-badge" href="https://github.com/jeus1998/Algorithm" target="_blank" rel="noreferrer">
+        <span>Programmers</span>
+        <img src="https://raw.githubusercontent.com/jeus1998/Algorithm/main/lib/result.svg" alt="Programmers 프로필 배지" loading="lazy">
+      </a>
+      <a class="algorithm-badge" href="https://solved.ac/profile/baejeu" target="_blank" rel="noreferrer">
+        <span>Baekjoon · baejeu</span>
+        <img src="https://mazassumnida.wtf/api/v2/generate_badge?boj=baejeu" alt="baejeu 백준 프로필 배지" loading="lazy">
+      </a>
+      <a class="algorithm-badge" href="https://solved.ac/profile/zeus20240228" target="_blank" rel="noreferrer">
+        <span>Baekjoon · zeus20240228</span>
+        <img src="https://mazassumnida.wtf/api/v2/generate_badge?boj=zeus20240228" alt="zeus20240228 백준 프로필 배지" loading="lazy">
+      </a>
+    </div>
+  </section>
   <div class="coding-browser" data-coding-browser data-source="{{ '/assets/data/coding-test-files.json' | relative_url }}">
     <aside class="coding-sidebar">
       <label class="visually-hidden" for="coding-search">문제 검색</label>
