@@ -13,6 +13,15 @@
 .category-nav a:hover,.category-chip:hover{border-color:#cbd9ca;background:#eaf0e8;color:#355640}
 .category-nav a span{color:#9aa49a;font:9px 'DM Mono',monospace}
 .category-nav .category-all-link{margin-left:auto;border:0;background:none;color:var(--green);font-size:11px}
+.category-directory-link{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:5px 0 40px;padding:19px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.category-directory-link h2{margin:4px 0;font-size:18px;letter-spacing:-.04em}
+.category-directory-link p:not(.eyebrow){margin:0;color:#7a837a;font-size:12px}
+.category-directory-link>a{flex:none;color:var(--green);font-size:12px;font-weight:600;text-decoration:none}
+.category-directory-link>a span{margin-left:8px}
+.category-breadcrumb{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 20px;color:#8a9389;font-size:11px}
+.category-breadcrumb a{color:var(--green);text-decoration:none}
+.category-breadcrumb a:hover{text-decoration:underline}
+.category-breadcrumb [aria-current=page]{color:var(--ink);font-weight:600}
 .post-results-heading{margin:0 0 13px}
 .post-row[hidden]{display:none!important}
 .post-summary .category-list,.article-meta .category-list{display:flex;flex-wrap:wrap;gap:6px}
@@ -47,7 +56,7 @@
 .archive-search{margin:0 0 32px}
 .article-meta{display:flex;align-items:center;gap:12px;color:#929a92;font:10px 'DM Mono',monospace}
 .article-meta .category-chip{font-family:var(--sans);font-size:9px}
-@media(max-width:700px){.site-header nav{gap:10px}.site-header nav a{font-size:11px}.category-nav{margin-bottom:32px}.category-nav .category-all-link{margin-left:0}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.categories-page,.category-page{padding:38px 3% 64px}.archive-header{padding:28px 0 22px}}
+@media(max-width:700px){.site-header nav{gap:10px}.site-header nav a{font-size:11px}.category-nav{margin-bottom:32px}.category-nav .category-all-link{margin-left:0}.category-directory-link{align-items:flex-start;flex-direction:column;gap:13px;margin-bottom:32px}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.categories-page,.category-page{padding:38px 3% 64px}.archive-header{padding:28px 0 22px}}
 @media(max-width:430px){.header-inner{width:calc(100% - 24px)}.brand{gap:7px;font-size:14px}.brand-mark{width:28px;height:28px;font-size:15px}.site-header nav{gap:7px}.site-header nav a{font-size:10px}.category-grid{grid-template-columns:1fr}}
 
 /* Coding test archive */

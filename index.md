@@ -19,15 +19,10 @@ title: 홈
     <input id="post-search-input" type="search" placeholder="제목, 내용, 카테고리로 검색" autocomplete="off">
     <span class="search-icon" aria-hidden="true">⌕</span>
   </form>
-  <nav class="category-nav" aria-label="카테고리별 글">
-    <span class="category-nav-label">카테고리</span>
-    {% assign categories = site.blog_categories | sort: "title" %}
-    {% for category in categories %}
-      {% assign category_posts = site.posts | where_exp: "post", "post.categories contains category.title" %}
-      <a href="{{ category.url | relative_url }}">{{ category.title }} <span>{{ category_posts.size }}</span></a>
-    {% endfor %}
-    <a class="category-all-link" href="{{ '/categories/' | relative_url }}">모두 보기 →</a>
-  </nav>
+  <section class="category-directory-link" aria-label="카테고리 찾아보기">
+    <div><p class="eyebrow">BROWSE BY CATEGORY</p><h2>주제별로 기록 보기</h2><p>상위 분류와 하위 분류를 따라 관심 있는 글을 찾아보세요.</p></div>
+    <a href="{{ '/categories/' | relative_url }}">전체 카테고리 보기 <span aria-hidden="true">→</span></a>
+  </section>
   <div class="section-heading post-results-heading"><h2>모든 글</h2><span class="post-count" data-post-count>{{ site.posts.size }}개의 글</span></div>
   <div class="post-list" data-post-list>
     {% for post in site.posts %}

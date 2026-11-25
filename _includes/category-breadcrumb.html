@@ -1,0 +1,5 @@
+{% assign category = site.blog_categories | where: "notion_id", include.category_id | first %}
+{% if category %}
+  {% if category.parent_notion_id %}{% include category-breadcrumb.html category_id=category.parent_notion_id %}{% endif %}
+  <a href="{{ category.url | relative_url }}">{{ category.title }}</a><span aria-hidden="true">/</span>
+{% endif %}

@@ -9,7 +9,12 @@ layout: default
 {% endif %}
 <section class="category-page">
   <a class="back-link" href="{{ '/categories/' | relative_url }}">← 카테고리 전체 보기</a>
-  {% if parent_category %}<a class="back-link" href="{{ parent_category.url | relative_url }}">← {{ parent_category.title }}</a>{% endif %}
+  {% if page.notion_id and page.parent_notion_id %}
+    <nav class="category-breadcrumb" aria-label="카테고리 경로">
+      {% include category-breadcrumb.html category_id=page.parent_notion_id %}
+      <span aria-current="page">{{ page.title }}</span>
+    </nav>
+  {% elsif page.parent %}<a class="back-link" href="{{ '/categories/' | relative_url }}">{{ page.parent }}의 상위 분류</a>{% endif %}
   <header class="archive-header">
     <p class="eyebrow">CATEGORY</p>
     <h1>{{ page.title }}</h1>
