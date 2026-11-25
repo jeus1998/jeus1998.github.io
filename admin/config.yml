@@ -52,6 +52,22 @@ collections:
         name: description
         widget: text
         required: false
+      - label: 상위 카테고리
+        name: parent
+        widget: relation
+        collection: blog_categories
+        value_field: title
+        search_fields: [title]
+        display_fields: [title]
+        required: false
+      - label: Notion 페이지 ID
+        name: notion_id
+        widget: hidden
+        required: false
+      - label: 상위 Notion 페이지 ID
+        name: parent_notion_id
+        widget: hidden
+        required: false
   - name: posts
     label: 글
     label_singular: 글

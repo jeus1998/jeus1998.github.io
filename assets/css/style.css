@@ -40,6 +40,10 @@
 .category-tree-list a small{flex:none;color:#879087;font:10px 'DM Mono',monospace}
 .category-tree-list .category-tree-list{margin:7px 0 8px 17px;padding-left:12px;border-left:1px solid var(--line)}
 .notion-breadcrumb{margin:8px 0 0;color:#89918a;font-size:11px}
+.notion-breadcrumb ol{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:0;list-style:none}
+.notion-breadcrumb li:not(:last-child)::after{content:"/";margin-left:7px;color:#b0b7af}
+.notion-breadcrumb a{color:inherit;text-decoration:none}
+.notion-breadcrumb a:hover{color:var(--green);text-decoration:underline}
 .archive-search{margin:0 0 32px}
 .article-meta{display:flex;align-items:center;gap:12px;color:#929a92;font:10px 'DM Mono',monospace}
 .article-meta .category-chip{font-family:var(--sans);font-size:9px}

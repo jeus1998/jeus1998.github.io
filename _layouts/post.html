@@ -15,7 +15,17 @@ layout: default
     </div>
     <h1>{{ page.title }}</h1>
     {% if page.description %}<p class="article-deck">{{ page.description }}</p>{% endif %}
-    {% if page.notion_path %}<p class="notion-breadcrumb">Study Record / {{ page.notion_path }}</p>{% endif %}
+    {% if page.notion_category_ids %}
+      <nav class="notion-breadcrumb" aria-label="Study Record 분류 경로">
+        <ol>
+          {% for category_id in page.notion_category_ids %}
+            {% assign category_doc = site.blog_categories | where: "notion_id", category_id | first %}
+            {% if category_doc %}<li><a href="{{ category_doc.url | relative_url }}">{{ category_doc.title }}</a></li>{% endif %}
+          {% endfor %}
+          <li aria-current="page">{{ page.title }}</li>
+        </ol>
+      </nav>
+    {% elsif page.notion_path %}<p class="notion-breadcrumb">{{ page.notion_path }}</p>{% endif %}
     <div class="reading-time">{{ page.content | number_of_words | divided_by: 200 | at_least: 1 }}분 읽기</div>
   </header>
   <div class="prose">{{ content }}</div>

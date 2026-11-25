@@ -1,12 +1,31 @@
-{% assign children = include.categories | where_exp: "item", "item.parent == include.parent" %}
-{% if children.size > 0 %}
+{% assign parent_id = include.parent_id | default: "" %}
+{% assign parent_title = include.parent_title | default: "" %}
+{% assign rendered = false %}
+{% for category in include.categories %}
+  {% assign category_parent_id = category.parent_notion_id | default: "" %}
+  {% assign category_parent_title = category.parent | default: "" %}
+  {% if category.notion_id and category_parent_id == parent_id %}{% assign rendered = true %}
+  {% elsif category.notion_id == nil and category_parent_title == parent_title %}{% assign rendered = true %}{% endif %}
+{% endfor %}
+{% if rendered %}
 <ul class="category-tree-list">
-  {% for category in children %}
+  {% for category in include.categories %}
+    {% assign category_parent_id = category.parent_notion_id | default: "" %}
+    {% assign category_parent_title = category.parent | default: "" %}
+    {% assign is_child = false %}
+    {% if category.notion_id and category_parent_id == parent_id %}{% assign is_child = true %}
+    {% elsif category.notion_id == nil and category_parent_title == parent_title %}{% assign is_child = true %}{% endif %}
+    {% if is_child %}
     {% assign category_posts = site.posts | where_exp: "post", "post.categories contains category.title" %}
+    {% if category.notion_id %}
+      {% assign notion_posts = site.posts | where_exp: "post", "post.notion_category_ids contains category.notion_id" %}
+      {% assign category_posts = category_posts | concat: notion_posts | uniq %}
+    {% endif %}
     <li>
       <a href="{{ category.url | relative_url }}"><span>{{ category.title }}</span><small>{{ category_posts.size }}개의 글</small></a>
-      {% include category-tree.html categories=include.categories parent=category.title %}
+      {% include category-tree.html categories=include.categories parent_id=category.notion_id parent_title=category.title %}
     </li>
+    {% endif %}
   {% endfor %}
 </ul>
 {% endif %}
