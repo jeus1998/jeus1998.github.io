@@ -30,6 +30,7 @@ SESSION.headers.update({"Authorization": f"Bearer {TOKEN}", "Notion-Version": VE
 
 def api(path: str, params: dict | None = None) -> dict:
     for attempt in range(6):
+        time.sleep(0.35)
         response = SESSION.get(f"{API}/{path}", params=params, timeout=60)
         if response.status_code == 429:
             time.sleep(int(response.headers.get("Retry-After", "2")))
@@ -79,13 +80,14 @@ def download_notion_file(block: dict, file_obj: dict) -> str:
         return ""
     block_id = block["id"].replace("-", "")
     ext = Path(urlparse(url).path).suffix.lower()
+    response = requests.get(url, timeout=90)
+    response.raise_for_status()
+    content_type = response.headers.get("Content-Type", "").split(";", 1)[0]
     if not ext:
-        ext = mimetypes.guess_extension(file_obj.get("mime_type", "")) or ".bin"
+        ext = mimetypes.guess_extension(file_obj.get("mime_type") or content_type) or ".bin"
     MEDIA.mkdir(parents=True, exist_ok=True)
     target = MEDIA / f"{block_id}{ext}"
-    if not target.exists():
-        response = requests.get(url, timeout=90)
-        response.raise_for_status()
+    if not target.exists() or target.read_bytes() != response.content:
         target.write_bytes(response.content)
     return f"/assets/images/notion/{target.name}"
 
