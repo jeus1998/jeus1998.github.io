@@ -11,7 +11,11 @@
  function drawDetail(p){detail.replaceChildren();const head=el("div","coding-detail-heading"),copy=el("div");copy.append(el("p","eyebrow",p.platform+" · "+p.level),el("h2","",p.title),el("span","coding-date","문제 번호 "+p.number+" · "+p.date));head.append(copy);
   const actions=el("div","coding-actions");if(p.problem_url)actions.append(external("문제 ↗",p.problem_url));actions.append(external("GitHub ↗",p.github_url));if(p.post_url)actions.append(external("블로그 글 ↗",p.post_url));head.append(actions);detail.append(head);
   const tabs=el("div","coding-tabs"),pane=el("div","coding-content");
-  const show=tab=>{tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("is-active",b.dataset.tab===tab));pane.replaceChildren();const pre=el("pre",tab==="readme"?"coding-readme":"coding-code");if(tab==="readme")pre.textContent=p.readme;else{const code=el("code");code.textContent=p.source;pre.append(code);}pane.append(pre);};
+  const show=tab=>{tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("is-active",b.dataset.tab===tab));pane.replaceChildren();if(tab==="readme"){const readme=el("div","coding-readme");
+   if(window.marked&&window.DOMPurify){readme.innerHTML=window.DOMPurify.sanitize(window.marked.parse(p.readme));}
+   else{readme.textContent=p.readme;}
+   pane.append(readme);
+  }else{const pre=el("pre","coding-code"),code=el("code");code.textContent=p.source;pre.append(code);pane.append(pre);}};
   [["readme","README"],["code","Java 코드"]].forEach(([key,label])=>{const b=el("button","",label);b.type="button";b.dataset.tab=key;b.onclick=()=>show(key);tabs.append(b);});
   detail.append(tabs,pane);show("readme");
  }
