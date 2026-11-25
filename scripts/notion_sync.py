@@ -16,6 +16,11 @@ import requests
 
 ROOT_ID = os.environ.get("NOTION_ROOT_PAGE_ID", "d19bec251d44498c8c53ac994966d82d")
 PAGE_ID = os.environ.get("NOTION_PAGE_ID", "").strip()
+PAGE_IDS = os.environ.get("NOTION_PAGE_IDS", "").strip()
+SELECTED_PAGE_IDS = list(dict.fromkeys(
+    [value.replace("-", "") for value in re.split(r"[\s,;]+", PAGE_IDS) if value]
+    + ([PAGE_ID.replace("-", "")] if PAGE_ID else [])
+))
 TOKEN = os.environ["NOTION_API_KEY"]
 API = "https://api.notion.com/v1"
 VERSION = "2022-06-28"
@@ -449,24 +454,25 @@ def main() -> None:
 
     # Every manual or scheduled run updates the parent-child index. A first
     # manual run establishes a baseline without importing the whole workspace.
-    selected_id = PAGE_ID.replace("-", "") if PAGE_ID else ""
-    if selected_id and selected_id not in index:
-        raise RuntimeError(f"Selected Notion page {selected_id} is outside the Study Record tree or unavailable.")
-    if not old_pages and not selected_id:
+    missing_selected = [page_id for page_id in SELECTED_PAGE_IDS if page_id not in index]
+    if missing_selected:
+        raise RuntimeError(f"Selected Notion pages are outside the Study Record tree or unavailable: {', '.join(missing_selected)}")
+    if not old_pages and not SELECTED_PAGE_IDS:
         # A scheduled run before the first manual import records a safe baseline
         # without publishing the entire existing Study Record tree.
         save_state(index)
         print(f"Saved initial Notion index for {len(index)} pages; existing pages remain staged for manual import.", flush=True)
         return
 
-    if selected_id == ROOT_ID.replace("-", ""):
-        root = index[selected_id]
-        save_category({"id": selected_id}, root["title"])
+    if ROOT_ID.replace("-", "") in SELECTED_PAGE_IDS:
+        root_id = ROOT_ID.replace("-", "")
+        root = index[root_id]
+        save_category({"id": root_id}, root["title"])
         category_titles.add(root["title"])
-        written_categories.add(CATEGORIES / f"notion-{slug_id(selected_id)}.md")
+        written_categories.add(CATEGORIES / f"notion-{slug_id(root_id)}.md")
 
     candidates = set()
-    if selected_id:
+    for selected_id in SELECTED_PAGE_IDS:
         candidates.add(selected_id)
         candidates.update(page_id for page_id in index if selected_id in {a[1]["id"] for a in page_ancestors(page_id, index)})
     if old_pages:

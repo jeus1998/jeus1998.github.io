@@ -16,10 +16,15 @@ on:
   workflow_dispatch:
     inputs:
       notion_page_id:
-        description: "이번 실행에서 가져올 Notion 페이지 ID (기본값은 첫 CS 글)"
-        required: true
+        description: "가져올 Notion 페이지 ID 하나 (선택 사항)"
+        required: false
         type: string
-        default: "26b7d6692ca881c29b94ed3e4f727d66"
+        default: ""
+      notion_page_ids:
+        description: "여러 페이지 묶음: ID를 쉼표 또는 줄바꿈으로 구분"
+        required: false
+        type: string
+        default: ""
   repository_dispatch:
     types: [coding-test-updated]
 permissions:
@@ -59,6 +64,7 @@ jobs:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_ROOT_PAGE_ID: d19bec251d44498c8c53ac994966d82d
           NOTION_PAGE_ID: ${{ inputs.notion_page_id || (github.event_name == 'push' && '26b7d6692ca881c29b94ed3e4f727d66') || '' }}
+          NOTION_PAGE_IDS: ${{ inputs.notion_page_ids }}
         run: python scripts/notion_sync.py
       - name: Import coding-test solutions
         if: github.event_name == 'repository_dispatch'
