@@ -24,7 +24,11 @@ layout: default
   {% if page.notion_id == nil %}{% assign child_categories = site.blog_categories | where: "parent", page.title %}{% endif %}
   {% if child_categories.size > 0 %}
     <div class="section-heading"><h2>하위 분류</h2></div>
-    {% include category-tree.html categories=site.blog_categories parent_id=page.notion_id parent_title=page.title %}
+    {% if page.notion_id %}
+      {% include category-tree.html categories=site.blog_categories parent_id=page.notion_id parent_title=page.title %}
+    {% else %}
+      {% include category-tree.html categories=site.blog_categories parent_title=page.title legacy_only=true %}
+    {% endif %}
   {% endif %}
   <form class="post-search archive-search" role="search" data-post-search>
     <label class="visually-hidden" for="post-search-input">이 카테고리에서 글 검색</label>
