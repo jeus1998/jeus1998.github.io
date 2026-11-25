@@ -17,6 +17,10 @@ from urllib.parse import urlparse
 import requests
 
 ROOT_ID = os.environ.get("NOTION_ROOT_PAGE_ID", "d19bec251d44498c8c53ac994966d82d")
+PAGE_ID = os.environ.get("NOTION_PAGE_ID", "").strip()
+PARENT_CATEGORY = os.environ.get("NOTION_PARENT_CATEGORY", "").strip()
+PARENT_CATEGORY_ID = os.environ.get("NOTION_PARENT_CATEGORY_ID", "").strip()
+PARENT_PATH = os.environ.get("NOTION_PARENT_PATH", "").strip()
 TOKEN = os.environ["NOTION_API_KEY"]
 API = "https://api.notion.com/v1"
 VERSION = "2022-06-28"
@@ -264,8 +268,12 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
         post_path = POSTS / f"{day}-notion-{slug_id(page_id)}.md"
         ancestors = [item[0] for item in parents if item[0] in category_titles]
         direct_category = [title] if subpages and title in category_titles else ancestors[-1:]
+        if PAGE_ID and PARENT_CATEGORY:
+            direct_category = [PARENT_CATEGORY]
         categories_yaml = "[" + ", ".join(yaml_quote(item) for item in direct_category) + "]"
         breadcrumb = " / ".join([item[0] for item in parents if item[0] != "Study Record"] + [title])
+        if PAGE_ID and PARENT_PATH:
+            breadcrumb = f"{PARENT_PATH} / {title}"
         front = ["---", "layout: post", f"title: {yaml_quote(title)}", f"date: {date}",
                  f"categories: {categories_yaml}", "tags: [Notion 가져오기]",
                  f"description: {yaml_quote('Study Record에서 가져온 기록입니다.')}",
@@ -281,20 +289,28 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
 def main() -> None:
     POSTS.mkdir(exist_ok=True)
     CATEGORIES.mkdir(exist_ok=True)
+    if PAGE_ID:
+        if PARENT_CATEGORY and PARENT_CATEGORY_ID:
+            save_category({"id": PARENT_CATEGORY_ID}, PARENT_CATEGORY, "Study Record")
+            written_categories.add(CATEGORIES / f"notion-{slug_id(PARENT_CATEGORY_ID)}.md")
+        page = api(f"pages/{PAGE_ID.replace('-', '')}")
+        walk(PAGE_ID, page_title(page), [])
+        print(f"Imported selected Notion page subtree: {len(written)} posts, {len(written_categories)} categories, and {len(written_media)} media files.", flush=True)
+        return
+
     walk(ROOT_ID, "Study Record", [])
-    # Remove only posts created by this importer; leave all manually authored files untouched.
+    # Full-tree runs alone may remove stale content; partial runs never prune unrelated posts.
     for path in POSTS.glob("*-notion-*.md"):
         if path not in written:
             path.unlink()
     for path in CATEGORIES.glob("notion-*.md"):
         if path not in written_categories:
             path.unlink()
-    # This directory is owned by the importer. Remove downloaded attachments no longer
-    # referenced by any page after the full Notion tree has been fetched successfully.
     for path in MEDIA.glob("*"):
         if path.is_file() and path not in written_media:
             path.unlink()
     print(f"Synced {len(written)} pages, {len(category_titles)} categories, and {len(written_media)} media files from Notion.")
+
 
 
 if __name__ == "__main__":

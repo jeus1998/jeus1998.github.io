@@ -1,6 +1,12 @@
 # Study Record Notion 동기화 준비
 
-`scripts/notion_sync.py`는 `Study Record` 아래 페이지를 재귀적으로 읽어 Jekyll 글과 분류로 저장합니다. `.github/workflows/sync-notion.yml`은 매시간 동기화를 실행하며, Actions의 **Run workflow**로 수동 실행도 할 수 있습니다.
+## 한 페이지씩 가져오기
+
+현재 Notion 동기화는 자동 전체 실행 대신 Actions에서 선택한 페이지와 그 하위 페이지만 가져옵니다. 기본 페이지는 운영체제 개요 & 컴퓨터 시스템 동작원리입니다. 첫 실행은 이 글 한 편과 상위 분류만 추가하며, 기존 글이나 다른 Notion 페이지를 삭제하지 않습니다.
+
+다음 글을 가져올 때는 저장소의 Actions → Sync Notion and coding-test posts → Run workflow에서 notion_page_id를 대상 Notion 페이지 ID로 바꿔 실행하세요. ID는 Notion 페이지 URL의 마지막 32자리 문자열입니다. 상위 분류와 경로도 함께 입력하면 블로그에서 계층을 보존할 수 있습니다. Study Record 전체 ID를 넣으면 전체 트리를 가져오므로, 작은 단위로 진행할 때는 개별 하위 페이지 ID를 사용하세요.
+
+`scripts/notion_sync.py`는 `Study Record` 아래 페이지를 재귀적으로 읽어 Jekyll 글과 분류로 저장합니다. `.github/workflows/sync-notion.yml`은 Actions에서 선택한 Notion 페이지를 수동으로 가져옵니다. 코딩 테스트 저장소 푸시 동기화는 계속 자동으로 동작합니다.
 
 ## 처음 한 번만 설정
 

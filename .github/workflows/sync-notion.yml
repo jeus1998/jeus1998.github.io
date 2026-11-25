@@ -1,10 +1,29 @@
 name: Sync Notion and coding-test posts
 on:
   workflow_dispatch:
+    inputs:
+      notion_page_id:
+        description: "이번 실행에서 가져올 Notion 페이지 ID (기본값은 첫 CS 글)"
+        required: true
+        type: string
+        default: "26b7d6692ca881c29b94ed3e4f727d66"
+      notion_parent_category:
+        description: "이 페이지를 블로그에서 묶을 상위 분류"
+        required: false
+        type: string
+        default: "ComputerScience 정리"
+      notion_parent_category_id:
+        description: "상위 분류 Notion 페이지 ID"
+        required: false
+        type: string
+        default: "26b7d6692ca88066ac0ff68b91fdde4e"
+      notion_parent_path:
+        description: "블로그에 표시할 Notion 상위 경로"
+        required: false
+        type: string
+        default: "Study Record / ComputerScience 정리 / 운영체제 OS / 운영체제 정리"
   repository_dispatch:
     types: [coding-test-updated]
-  schedule:
-    - cron: '17 * * * *'
 permissions:
   contents: write
   actions: write
@@ -41,6 +60,10 @@ jobs:
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_ROOT_PAGE_ID: d19bec251d44498c8c53ac994966d82d
+          NOTION_PAGE_ID: ${{ inputs.notion_page_id }}
+          NOTION_PARENT_CATEGORY: ${{ inputs.notion_parent_category }}
+          NOTION_PARENT_CATEGORY_ID: ${{ inputs.notion_parent_category_id }}
+          NOTION_PARENT_PATH: ${{ inputs.notion_parent_path }}
         run: python scripts/notion_sync.py
       - name: Import coding-test solutions
         run: python scripts/coding_test_sync.py
