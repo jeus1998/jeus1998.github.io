@@ -13,17 +13,15 @@ permalink: /coding-test/
   <section class="algorithm-profile" aria-labelledby="algorithm-profile-heading">
     <div class="algorithm-profile-heading">
       <div><p class="eyebrow">ALGORITHM PROFILE</p><h2 id="algorithm-profile-heading">알고리즘 프로필</h2></div>
-
     </div>
-    <div class="algorithm-badges">
-      <div class="algorithm-badge">
-        <span>Programmers</span>
-        <img src="https://raw.githubusercontent.com/jeus1998/Algorithm/main/lib/result.svg" alt="Programmers 프로필 배지" loading="lazy">
-      </div>
-      <div class="algorithm-badge">
-        <span>Baekjoon · zeus20240228</span>
-        <img src="https://mazassumnida.wtf/api/v2/generate_badge?boj=zeus20240228" alt="zeus20240228 백준 프로필 배지" loading="lazy">
-      </div>
+    <div class="algorithm-table-wrap">
+      <table class="algorithm-profile-table">
+        <thead><tr><th scope="col">Programmers</th><th scope="col">Baekjoon</th></tr></thead>
+        <tbody><tr>
+          <td><img src="https://raw.githubusercontent.com/jeus1998/Algorithm/main/lib/result.svg" alt="Programmers 프로필 배지" loading="lazy"></td>
+          <td><img src="https://mazassumnida.wtf/api/v2/generate_badge?boj=zeus20240228" alt="zeus20240228 백준 프로필 배지" loading="lazy"></td>
+        </tr></tbody>
+      </table>
     </div>
   </section>
   <div class="coding-browser" data-coding-browser data-source="{{ '/assets/data/coding-test-files.json' | relative_url }}">
