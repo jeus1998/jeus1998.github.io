@@ -80,8 +80,37 @@ def download_notion_file(block: dict, file_obj: dict) -> str:
         return ""
     block_id = block["id"].replace("-", "")
     ext = Path(urlparse(url).path).suffix.lower()
-    response = requests.get(url, timeout=90)
-    response.raise_for_status()
+    response = None
+
+    for attempt in range(6):
+        try:
+            response = requests.get(url, timeout=(20, 90))
+            if response.status_code in (401, 403, 404):
+                # Notion-hosted file URLs are temporary. Refresh the URL from the block.
+                if attempt == 5:
+                    response.raise_for_status()
+                latest = api(f"blocks/{block['id']}")
+                latest_data = latest.get(latest.get("type", ""), {})
+                refreshed = latest_data.get("file") or latest_data.get("external") or {}
+                url = refreshed.get("url", url)
+                ext = Path(urlparse(url).path).suffix.lower() or ext
+                continue
+            if response.status_code == 429 or response.status_code >= 500:
+                if attempt == 5:
+                    response.raise_for_status()
+                delay = int(response.headers.get("Retry-After", str(min(2 ** attempt, 30))))
+                print(f"Temporary file download response {response.status_code}; retrying in {delay}s.", flush=True)
+                time.sleep(delay)
+                continue
+            response.raise_for_status()
+            break
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            if attempt == 5:
+                raise
+            delay = min(2 ** attempt, 30)
+            print(f"File download interrupted ({type(exc).__name__}); retrying in {delay}s.", flush=True)
+            time.sleep(delay)
+
     content_type = response.headers.get("Content-Type", "").split(";", 1)[0]
     if not ext:
         ext = mimetypes.guess_extension(file_obj.get("mime_type") or content_type) or ".bin"
@@ -91,7 +120,6 @@ def download_notion_file(block: dict, file_obj: dict) -> str:
         target.write_bytes(response.content)
     written_media.add(target)
     return f"/assets/images/notion/{target.name}"
-
 
 def page_title(block: dict) -> str:
     kind = block.get("type")
@@ -206,6 +234,8 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
     if page_id in seen:
         return
     seen.add(page_id)
+    if len(seen) % 25 == 0:
+        print(f"Visited {len(seen)} Notion pages so far.", flush=True)
     page = api(f"pages/{page_id}")
     title = page_title(page) or title
     blocks = children(page_id)
