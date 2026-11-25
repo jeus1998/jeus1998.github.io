@@ -20,4 +20,6 @@ permalink: /coding-test/
     <section class="coding-detail" data-coding-detail aria-live="polite"><p class="coding-placeholder">왼쪽에서 문제를 선택하세요.</p></section>
   </div>
 </section>
+<script defer src="https://cdn.jsdelivr.net/npm/marked@18.0.14/lib/marked.umd.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.5.0/dist/purify.min.js"></script>
 <script defer src="{{ '/assets/js/coding-test-browser.js' | relative_url }}"></script>
