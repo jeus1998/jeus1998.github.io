@@ -86,3 +86,10 @@ GitHub에서 직접 이미지 파일을 올릴 수도 있습니다. `assets/imag
 ## 배포 방식
 
 `main` 브랜치에 커밋하면 GitHub Actions가 Jekyll로 사이트를 빌드하고 GitHub Pages에 배포합니다. [Actions 실행 내역](https://github.com/jeus1998/jeus1998.github.io/actions)에서 진행 상태를 확인할 수 있습니다.
+
+
+## Study Record Notion 동기화
+
+공개된 [Study Record](https://parallel-shrine-c64.notion.site/Study-Record-d19bec251d44498c8c53ac994966d82d)의 하위 페이지를 블로그로 가져오는 동기화 도구를 준비했습니다. 현재 공개 페이지에서 확인되는 구조는 상위 분류 19개와 그 아래 페이지 링크 118개이며, 더 깊은 하위 페이지도 있습니다. 도구는 페이지 계층을 카테고리로 보존하고 Notion 페이지 ID를 기준으로 글을 갱신합니다. Notion에 업로드된 이미지는 저장소에 복사합니다.
+
+자동 동기화를 켜려면 Notion 읽기 전용 통합을 만들고 `Study Record` 페이지에 연결한 뒤, GitHub 저장소의 Actions secret `NOTION_API_KEY`에 통합 토큰을 등록해야 합니다. 설정 후 시간 단위로 변경 사항을 확인합니다. 단계별 설정과 지원 블록 안내는 [Notion 동기화 안내](NOTION_SYNC.md)를 참고하세요. 동기화되는 글과 이미지는 공개 블로그에 게시됩니다.
