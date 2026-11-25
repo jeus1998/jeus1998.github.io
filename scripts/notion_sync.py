@@ -224,7 +224,7 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
         ancestors = [item[0] for item in parents if item[0] in category_titles]
         direct_category = [title] if subpages and title in category_titles else ancestors[-1:]
         categories_yaml = "[" + ", ".join(yaml_quote(item) for item in direct_category) + "]"
-        breadcrumb = " / ".join([item[0] for item in parents] + [title])
+        breadcrumb = " / ".join([item[0] for item in parents if item[0] != "Study Record"] + [title])
         front = ["---", "layout: post", f"title: {yaml_quote(title)}", f"date: {date}",
                  f"categories: {categories_yaml}", "tags: [Notion 가져오기]",
                  f"description: {yaml_quote('Study Record에서 가져온 기록입니다.')}",
