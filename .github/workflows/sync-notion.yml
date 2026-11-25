@@ -39,7 +39,7 @@ jobs:
             echo "Notion import skipped; coding-test import will continue."
           fi
       - name: Import Notion pages
-        if: steps.setup.outputs.ready == 'true'
+        if: github.event_name != 'repository_dispatch' && steps.setup.outputs.ready == 'true'
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_ROOT_PAGE_ID: d19bec251d44498c8c53ac994966d82d
