@@ -54,10 +54,19 @@ def children(block_id: str) -> list[dict]:
         cursor = data["next_cursor"]
 
 
+def redact_secrets(value: str) -> str:
+    """Mask credentials before imported text reaches public posts."""
+    value = re.sub(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", "[REDACTED PRIVATE KEY]", value, flags=re.S)
+    value = re.sub(r"\b(?:AKIA|ASIA|AIDA|AROA|ANPA|ANVA|AGPA)[A-Z0-9]{16}\b", "[REDACTED AWS ACCESS KEY]", value)
+    value = re.sub(r'''(?im)(aws[_ -]?secret[_ -]?access[_ -]?key|secret[_ -]?access[_ -]?key|client[_ -]?secret|access[_ -]?token|api[_ -]?key|password|passwd|token)(\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s,;]+)''', r"\1\2[REDACTED]", value)
+    value = re.sub(r"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b", "[REDACTED GITHUB TOKEN]", value)
+    return value
+
+
 def rich_text(items: list[dict]) -> str:
     parts = []
     for item in items or []:
-        value = item.get("plain_text", "")
+        value = redact_secrets(item.get("plain_text", ""))
         ann = item.get("annotations", {})
         if ann.get("code"):
             value = f"`{value}`"
@@ -198,7 +207,7 @@ def render_blocks(blocks: list[dict], depth: int = 0) -> str:
 
 
 def yaml_quote(value: str) -> str:
-    return json.dumps(value, ensure_ascii=False)
+    return json.dumps(redact_secrets(value), ensure_ascii=False)
 
 
 def slug_id(page_id: str) -> str:
@@ -247,7 +256,7 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
         category_titles.add(title)
         written_categories.add(CATEGORIES / f"notion-{slug_id(page_id)}.md")
 
-    body = render_blocks(blocks)
+    body = redact_secrets(render_blocks(blocks))
     # Category pages that contain useful notes are also preserved as posts.
     if body or not subpages:
         created = page.get("created_time", "2026-01-01T00:00:00Z")

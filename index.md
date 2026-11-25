@@ -11,6 +11,7 @@ title: 홈
   </div>
   <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div><span class="hero-symbol">{<br><b>;</b><br>}</span><span class="hero-caption">LEARN / BUILD / SHARE</span></div>
 </section>
+<section class="coding-feature"><div><p class="eyebrow">SOLVE & LEARN</p><h2>코딩 테스트 풀이</h2><p>백준과 프로그래머스 문제, README와 Java 코드를 한 곳에서 살펴보세요.</p></div><a class="coding-feature-link" href="{{ '/coding-test/' | relative_url }}">풀이 둘러보기 <span aria-hidden="true">→</span></a></section>
 <section class="posts-section" aria-labelledby="posts-heading">
   <div class="section-heading"><div><p class="eyebrow">THE JOURNAL</p><h2 id="posts-heading">최근 기록</h2></div></div>
   <form class="post-search" role="search" data-post-search>
