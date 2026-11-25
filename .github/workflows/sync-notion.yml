@@ -1,0 +1,44 @@
+name: Sync Study Record from Notion
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: notion-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install dependency
+        run: python -m pip install requests
+      - name: Import Notion pages
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_ROOT_PAGE_ID: d19bec251d44498c8c53ac994966d82d
+        run: python scripts/notion_sync.py
+      - name: Commit updated posts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _posts _blog_categories assets/images/notion
+          if git diff --cached --quiet; then
+            echo "No Notion changes to publish."
+          else
+            git commit -m "Sync Study Record from Notion"
+            git push
+          fi
