@@ -13,6 +13,9 @@
 {% if rendered %}
 <ul class="category-tree-list">
   {% for category in include.categories %}
+    {% assign parent_id = include.parent_id | default: "" %}
+    {% assign parent_title = include.parent_title | default: "" %}
+    {% assign legacy_only = include.legacy_only | default: false %}
     {% assign category_parent_id = category.parent_notion_id | default: "" %}
     {% assign category_parent_title = category.parent | default: "" %}
     {% assign is_child = false %}
