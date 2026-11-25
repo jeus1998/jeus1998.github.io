@@ -365,9 +365,16 @@ def render_blocks(blocks: list[dict], depth: int = 0) -> str:
         elif kind == "to_do":
             rendered = f"{'  ' * depth}- [{'x' if data.get('checked') else ' '}] {text}"
         elif kind == "code":
-            language = data.get("language", "text")
+            language = re.sub(r"\s+", "-", data.get("language", "").strip().lower())
+            # Notion's "plain text" is not a valid single-token Markdown info
+            # string. Keep plain blocks unlabelled so Kramdown parses their fences.
+            if language in {"plain-text", "plaintext", "text"}:
+                language = ""
+            elif not re.fullmatch(r"[a-z0-9_+.-]+", language):
+                language = ""
             body = rich_text(data.get("rich_text", []))
-            rendered = f"```{language}\n{body}\n```"
+            fence = "`" * max(3, max((len(match.group(0)) for match in re.finditer(r"`+", body)), default=0) + 1)
+            rendered = f"{fence}{language}\n{body}\n{fence}"
         elif kind == "quote":
             rendered = "\n".join(f"> {line}" for line in text.splitlines())
         elif kind == "callout":
@@ -522,9 +529,24 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[
             walk(child["id"], child.get("child_page", {}).get("title", "제목 없음"), next_parents, index)
 
 
+def normalize_existing_code_fences() -> int:
+    """Repair legacy Notion fences whose multiword language broke Markdown parsing."""
+    changed = 0
+    for post_path in POSTS.glob("*-notion-*.md"):
+        content = post_path.read_text(encoding="utf-8")
+        repaired = content.replace("```plain text", "```")
+        if repaired != content:
+            post_path.write_text(repaired, encoding="utf-8")
+            changed += 1
+    return changed
+
+
 def main() -> None:
     POSTS.mkdir(exist_ok=True)
     CATEGORIES.mkdir(exist_ok=True)
+    repaired_posts = normalize_existing_code_fences()
+    if repaired_posts:
+        print(f"Repaired plain-text code fences in {repaired_posts} imported posts.", flush=True)
     old_state = load_state()
     old_pages = old_state.get("pages", {})
     index = build_page_index(old_pages)
