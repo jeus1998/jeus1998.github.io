@@ -4,7 +4,7 @@ layout: default
 {% assign category_posts = site.posts | where_exp: "post", "post.categories contains page.title" %}
 {% if page.notion_id %}
   {% assign notion_posts = site.posts | where_exp: "post", "post.notion_category_ids contains page.notion_id" %}
-  {% assign category_posts = category_posts | concat: notion_posts | uniq %}
+  {% assign category_posts = category_posts | concat: notion_posts | uniq | sort: "notion_order_path" %}
   {% if page.parent_notion_id %}{% assign parent_category = site.blog_categories | where: "notion_id", page.parent_notion_id | first %}{% endif %}
 {% endif %}
 <section class="category-page">

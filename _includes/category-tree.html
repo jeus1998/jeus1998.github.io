@@ -12,7 +12,8 @@
 {% endfor %}
 {% if rendered %}
 <ul class="category-tree-list">
-  {% for category in include.categories %}
+  {% assign ordered_categories = include.categories | sort: "notion_order" %}
+  {% for category in ordered_categories %}
     {% assign parent_id = include.parent_id | default: "" %}
     {% assign parent_title = include.parent_title | default: "" %}
     {% assign legacy_only = include.legacy_only | default: false %}

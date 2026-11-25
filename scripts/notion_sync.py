@@ -80,7 +80,7 @@ def page_parent_id(page: dict) -> str:
     return ""
 
 
-def build_page_index() -> dict[str, dict]:
+def build_page_index(old_pages: dict[str, dict]) -> dict[str, dict]:
     pages = {page["id"].replace("-", ""): page for page in search_pages()}
     root_id = ROOT_ID.replace("-", "")
     if root_id not in pages:
@@ -102,6 +102,30 @@ def build_page_index() -> dict[str, dict]:
                 included.update(child_ids)
                 changed |= len(included) != before
 
+    ordered_children: dict[str, list[str]] = {}
+    for parent_id, child_ids in children_by_parent.items():
+        if parent_id not in included:
+            continue
+        parent = pages.get(parent_id)
+        old_parent = old_pages.get(parent_id, {})
+        cached = old_parent.get("children", [])
+        same_members = set(cached) == set(child_ids)
+        if (parent and old_parent.get("children_order_checked")
+                and old_parent.get("last_edited_time") == parent.get("last_edited_time")
+                and same_members):
+            ordered_children[parent_id] = cached
+            continue
+
+        # Notion's search endpoint has no ordering guarantee. The child blocks
+        # on the parent page are returned in the order shown in Notion.
+        block_order = [
+            block["id"].replace("-", "")
+            for block in children(parent_id)
+            if block.get("type") == "child_page"
+        ]
+        found = [page_id for page_id in block_order if page_id in child_ids]
+        ordered_children[parent_id] = found + [page_id for page_id in child_ids if page_id not in found]
+
     index: dict[str, dict] = {}
     for page_id in included:
         page = pages[page_id]
@@ -109,11 +133,20 @@ def build_page_index() -> dict[str, dict]:
         index[page_id] = {
             "title": page_title(page),
             "parent_id": parent_id,
-            "children": sorted(children_by_parent.get(page_id, [])),
+            "children": ordered_children.get(page_id, []),
+            "children_order_checked": True,
             "last_edited_time": page.get("last_edited_time", ""),
         }
+    for item in index.values():
+        for position, child_id in enumerate(item["children"]):
+            if child_id in index:
+                index[child_id]["notion_order"] = position
+    for item in index.values():
+        item.setdefault("notion_order", 0)
     for page_id, item in index.items():
         item["path"] = " / ".join([title for title, _ in page_ancestors(page_id, index)] + [item["title"]])
+        ancestry_ids = [ancestor[1]["id"] for ancestor in page_ancestors(page_id, index)] + [page_id]
+        item["notion_order_path"] = ".".join(f"{index[ancestor_id]['notion_order']:06d}" for ancestor_id in ancestry_ids)
     return index
 
 
@@ -157,6 +190,39 @@ def remove_deleted_pages(old_pages: dict[str, dict], index: dict[str, dict]) -> 
     for page_id in missing:
         remove_post_for_page(page_id)
         (CATEGORIES / f"notion-{slug_id(page_id)}.md").unlink(missing_ok=True)
+
+
+def refresh_published_order(index: dict[str, dict]) -> None:
+    """Update ordering metadata on already published files without refetching their bodies."""
+    for category_file in CATEGORIES.glob("notion-*.md"):
+        page_id = category_file.stem.removeprefix("notion-")
+        item = index.get(page_id)
+        if item and (item["children"] or page_id == ROOT_ID.replace("-", "")):
+            parent_id = item["parent_id"]
+            save_category({"id": page_id}, item["title"], parent_id,
+                          item["notion_order"], item["children"])
+
+    for post_path in POSTS.glob("*-notion-*.md"):
+        content = post_path.read_text(encoding="utf-8")
+        match = re.search(r"^notion_id:\s*[\"']?([0-9a-f-]+)", content, flags=re.M)
+        if not match:
+            continue
+        page_id = match.group(1).replace("-", "")
+        item = index.get(page_id)
+        if not item:
+            continue
+        replacements = {
+            "notion_order": str(item["notion_order"]),
+            "notion_order_path": yaml_quote(item["notion_order_path"]),
+        }
+        for key, value in replacements.items():
+            pattern = rf"^{key}:.*$"
+            line = f"{key}: {value}"
+            if re.search(pattern, content, flags=re.M):
+                content = re.sub(pattern, lambda _: line, content, count=1, flags=re.M)
+            else:
+                content = re.sub(r"\n---\s*\n", f"\n{line}\n---\n", content, count=1)
+        post_path.write_text(content, encoding="utf-8")
 
 
 def cleanup_orphan_media() -> None:
@@ -377,12 +443,14 @@ def safe_date(value: str) -> tuple[str, str]:
     return parsed.strftime("%Y-%m-%d"), parsed.strftime("%Y-%m-%d %H:%M:%S %z")
 
 
-def save_category(page: dict, title: str, parent_id: str = "") -> None:
+def save_category(page: dict, title: str, parent_id: str = "", notion_order: int = 0,
+                  child_ids: list[str] | None = None) -> None:
     key = slug_id(page["id"])
     path = CATEGORIES / f"notion-{key}.md"
     lines = ["---", "layout: category", f"title: {yaml_quote(title)}", f"slug: notion-{key}",
              f"description: {yaml_quote('Study Record에서 가져온 Notion 분류입니다.')}",
-             f"notion_id: {page['id']}"]
+             f"notion_id: {page['id']}", f"notion_order: {notion_order}",
+             f"notion_children: {json.dumps(child_ids or [])}"]
     if parent_id:
         lines.append(f"parent_notion_id: {yaml_quote(parent_id.replace('-', ''))}")
     lines += ["---", ""]
@@ -396,7 +464,7 @@ category_titles: set[str] = set()
 written_categories: set[Path] = set()
 
 
-def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
+def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[str, dict]) -> None:
     page_id = page_id.replace("-", "")
     if page_id in seen:
         return
@@ -410,7 +478,9 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
     page_record = {"id": page_id}
 
     if subpages and page_id != ROOT_ID.replace("-", ""):
-        save_category(page_record, title, parents[-1][1]["id"] if parents else "")
+        index_item = index[page_id]
+        save_category(page_record, title, parents[-1][1]["id"] if parents else "",
+                      index_item["notion_order"], index_item["children"])
         category_titles.add(title)
         written_categories.add(CATEGORIES / f"notion-{slug_id(page_id)}.md")
 
@@ -433,7 +503,9 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
                  f"categories: {categories_yaml}", "tags: [Notion 가져오기]",
                  f"description: {yaml_quote('Study Record에서 가져온 기록입니다.')}",
                  f"notion_id: {page_id}", f"notion_path: {yaml_quote(breadcrumb)}",
-                 f"notion_category_ids: {category_ids_yaml}", "---", "", "{% raw %}"]
+                 f"notion_category_ids: {category_ids_yaml}",
+                 f"notion_order: {index[page_id]['notion_order']}",
+                 f"notion_order_path: {yaml_quote(index[page_id]['notion_order_path'])}", "---", "", "{% raw %}"]
         # Notion content is user-authored Markdown, so Liquid-like examples
         # (for example GitHub Actions `${{ secrets.NAME }}` or Java array braces)
         # must remain literal instead of being parsed as Jekyll template syntax.
@@ -444,7 +516,7 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]]) -> None:
 
     next_parents = parents + [(title, page_record)]
     for child in subpages:
-        walk(child["id"], child.get("child_page", {}).get("title", "제목 없음"), next_parents)
+        walk(child["id"], child.get("child_page", {}).get("title", "제목 없음"), next_parents, index)
 
 
 def main() -> None:
@@ -452,8 +524,9 @@ def main() -> None:
     CATEGORIES.mkdir(exist_ok=True)
     old_state = load_state()
     old_pages = old_state.get("pages", {})
-    index = build_page_index()
+    index = build_page_index(old_pages)
     remove_deleted_pages(old_pages, index)
+    refresh_published_order(index)
 
     # Every manual or scheduled run updates the parent-child index. A first
     # manual run establishes a baseline without importing the whole workspace.
@@ -470,7 +543,7 @@ def main() -> None:
     if ROOT_ID.replace("-", "") in SELECTED_PAGE_IDS:
         root_id = ROOT_ID.replace("-", "")
         root = index[root_id]
-        save_category({"id": root_id}, root["title"])
+        save_category({"id": root_id}, root["title"], notion_order=0, child_ids=root["children"])
         category_titles.add(root["title"])
         written_categories.add(CATEGORIES / f"notion-{slug_id(root_id)}.md")
 
@@ -481,7 +554,10 @@ def main() -> None:
     if old_pages:
         for page_id, item in index.items():
             previous = old_pages.get(page_id)
-            if previous is None or (previous.get("imported") and any(previous.get(key) != item.get(key) for key in ("title", "parent_id", "children", "last_edited_time", "path"))):
+            children_changed = set(previous.get("children", [])) != set(item["children"]) if previous else True
+            if previous is None or (previous.get("imported") and (
+                    children_changed or any(previous.get(key) != item.get(key)
+                                            for key in ("title", "parent_id", "last_edited_time", "path")))):
                 candidates.add(page_id)
                 # Child page bodies are also rendered inside their parent page,
                 # so refresh imported ancestors when a descendant changes.
@@ -499,11 +575,13 @@ def main() -> None:
             ancestor_id = ancestor["id"]
             if index[ancestor_id]["children"] or ancestor_id == ROOT_ID.replace("-", ""):
                 parent_id = ancestors[i - 1][1]["id"] if i else ""
-                save_category(ancestor, ancestor_title, parent_id)
+                ancestor_item = index[ancestor_id]
+                save_category(ancestor, ancestor_title, parent_id,
+                              ancestor_item["notion_order"], ancestor_item["children"])
                 category_titles.add(ancestor_title)
                 written_categories.add(CATEGORIES / f"notion-{slug_id(ancestor_id)}.md")
         page = api(f"pages/{page_id}")
-        walk(page_id, page_title(page), ancestors)
+        walk(page_id, page_title(page), ancestors, index)
 
     # Save the complete inventory, preserving the staged-import flag.
     for page_id, item in index.items():
