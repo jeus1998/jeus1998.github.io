@@ -26,7 +26,7 @@ on:
         type: string
         default: ""
       notion_batch_queue:
-        description: "자동 실행할 후속 묶음 목록 (내부 사용)"
+        description: "자동 실행할 후속 묶음 목록: 각 묶음은 | 로 구분 (내부 사용)"
         required: false
         type: string
         default: ""
@@ -108,13 +108,13 @@ jobs:
         run: |
           python - <<'PY' > "$RUNNER_TEMP/next-batch.json"
           import json, os
-          batches = [line.strip() for line in os.environ["NOTION_BATCH_QUEUE"].splitlines() if line.strip()]
+          batches = [line.strip() for line in os.environ["NOTION_BATCH_QUEUE"].split("|") if line.strip()]
           if batches:
               print(json.dumps({
                   "ref": "main",
                   "inputs": {
                       "notion_page_ids": batches[0],
-                      "notion_batch_queue": "\n".join(batches[1:]),
+                      "notion_batch_queue": "|".join(batches[1:]),
                   },
               }))
           PY
