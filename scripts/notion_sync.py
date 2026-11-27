@@ -226,6 +226,28 @@ def refresh_published_order(index: dict[str, dict]) -> None:
         post_path.write_text(content, encoding="utf-8")
 
 
+def refresh_published_titles(index: dict[str, dict]) -> None:
+    """Refresh title and breadcrumb metadata without re-fetching page bodies."""
+    for post_path in POSTS.glob("*-notion-*.md"):
+        content = post_path.read_text(encoding="utf-8")
+        match = re.search(r"^notion_id:\s*[\"']?([0-9a-f-]+)", content, flags=re.M)
+        if not match:
+            continue
+        page_id = match.group(1).replace("-", "").lower()
+        item = index.get(page_id)
+        if not item:
+            continue
+        replacements = {
+            "title": yaml_quote(item["title"]),
+            "notion_path": yaml_quote(item["path"]),
+        }
+        for key, value in replacements.items():
+            pattern = rf"^{key}:.*$"
+            line = f"{key}: {value}"
+            content = re.sub(pattern, lambda _, line=line: line, content, count=1, flags=re.M)
+        post_path.write_text(content, encoding="utf-8")
+
+
 def cleanup_orphan_media() -> None:
     if not MEDIA.exists():
         return
@@ -455,7 +477,76 @@ def yaml_quote(value: str) -> str:
 
 
 def slug_id(page_id: str) -> str:
-    return page_id.replace("-", "")[:16].lower()
+    page_id = page_id.replace("-", "").lower()
+    prefix = page_id[:16]
+    if prefix in COLLIDING_SLUG_IDS and page_id != SHORT_SLUG_KEEPERS.get(prefix):
+        return page_id
+    return prefix
+
+
+def notion_id_from_file(path: Path) -> str | None:
+    content = path.read_text(encoding="utf-8")
+    match = re.search(r"^notion_id:\s*[\"']?([0-9a-f-]+)", content, flags=re.M)
+    return match.group(1).replace("-", "").lower() if match else None
+
+
+def configure_slug_ids(index: dict[str, dict]) -> None:
+    """Keep existing short URLs where possible and expand every colliding ID."""
+    global COLLIDING_SLUG_IDS, SHORT_SLUG_KEEPERS
+    groups: dict[str, set[str]] = {}
+    for page_id in index:
+        groups.setdefault(page_id[:16], set()).add(page_id)
+    COLLIDING_SLUG_IDS = {prefix: ids for prefix, ids in groups.items() if len(ids) > 1}
+
+    keepers: dict[str, str] = {}
+    candidates = [*sorted(POSTS.glob("*-notion-*.md")), *sorted(CATEGORIES.glob("notion-*.md"))]
+    for path in candidates:
+        page_id = notion_id_from_file(path)
+        if not page_id or page_id not in index:
+            continue
+        prefix = page_id[:16]
+        if prefix not in COLLIDING_SLUG_IDS or page_id in keepers.values():
+            continue
+        if path.stem.endswith(f"-notion-{prefix}") or path.stem == f"notion-{prefix}":
+            keepers[prefix] = page_id
+    for prefix, ids in COLLIDING_SLUG_IDS.items():
+        keepers.setdefault(prefix, sorted(ids)[0])
+    SHORT_SLUG_KEEPERS = keepers
+
+
+def normalize_existing_slug_paths(index: dict[str, dict]) -> int:
+    """Move collision-affected files to unique IDs without changing safe URLs."""
+    changed = 0
+    for path in sorted(POSTS.glob("*-notion-*.md")):
+        page_id = notion_id_from_file(path)
+        if not page_id or page_id not in index or not re.match(r"^\d{4}-\d{2}-\d{2}-notion-", path.name):
+            continue
+        target = POSTS / f"{path.name[:10]}-notion-{slug_id(page_id)}.md"
+        if path == target:
+            continue
+        if target.exists() and notion_id_from_file(target) == page_id:
+            path.unlink()
+        elif not target.exists():
+            path.rename(target)
+        else:
+            raise RuntimeError(f"Post slug collision while moving {path} to {target}.")
+        changed += 1
+
+    for path in sorted(CATEGORIES.glob("notion-*.md")):
+        page_id = notion_id_from_file(path)
+        if not page_id or page_id not in index:
+            continue
+        target = CATEGORIES / f"notion-{slug_id(page_id)}.md"
+        if path == target:
+            continue
+        if target.exists() and notion_id_from_file(target) == page_id:
+            path.unlink()
+        elif not target.exists():
+            path.rename(target)
+        else:
+            raise RuntimeError(f"Category slug collision while moving {path} to {target}.")
+        changed += 1
+    return changed
 
 
 def safe_date(value: str) -> tuple[str, str]:
@@ -482,6 +573,8 @@ written: set[Path] = set()
 written_media: set[Path] = set()
 category_titles: set[str] = set()
 written_categories: set[Path] = set()
+COLLIDING_SLUG_IDS: dict[str, set[str]] = {}
+SHORT_SLUG_KEEPERS: dict[str, str] = {}
 
 
 def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[str, dict],
@@ -593,8 +686,13 @@ def main() -> None:
     old_state = load_state()
     old_pages = old_state.get("pages", {})
     index = build_page_index(old_pages)
+    configure_slug_ids(index)
+    renamed_files = normalize_existing_slug_paths(index)
+    if renamed_files:
+        print(f"Moved {renamed_files} files to collision-safe Notion IDs.", flush=True)
     remove_deleted_pages(old_pages, index)
     refresh_published_order(index)
+    refresh_published_titles(index)
 
     # Every manual or scheduled run updates the parent-child index. A first
     # manual run establishes a baseline without importing the whole workspace.
@@ -626,7 +724,7 @@ def main() -> None:
             children_changed = set(previous.get("children", [])) != set(item["children"]) if previous else True
             if previous is None or (previous.get("imported") and (
                     children_changed or any(previous.get(key) != item.get(key)
-                                            for key in ("title", "parent_id", "last_edited_time", "path")))):
+                                            for key in ("parent_id", "last_edited_time")))):
                 candidates.add(page_id)
                 # Child page bodies are also rendered inside their parent page,
                 # so refresh imported ancestors when a descendant changes.
