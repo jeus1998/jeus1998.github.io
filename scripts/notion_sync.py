@@ -17,6 +17,9 @@ import requests
 ROOT_ID = os.environ.get("NOTION_ROOT_PAGE_ID", "d19bec251d44498c8c53ac994966d82d")
 PAGE_ID = os.environ.get("NOTION_PAGE_ID", "").strip()
 PAGE_IDS = os.environ.get("NOTION_PAGE_IDS", "").strip()
+REPAIR_COLLISIONS = os.environ.get("NOTION_REPAIR_COLLISIONS", "").lower() in {"1", "true", "yes"}
+COLLISION_OFFSET = max(0, int(os.environ.get("NOTION_COLLISION_OFFSET", "0") or "0"))
+COLLISION_BATCH_SIZE = 25
 PAGE_ID_TOKENS = [value for value in re.split(r"[\s,;]+", PAGE_IDS) if value]
 if PAGE_ID:
     PAGE_ID_TOKENS.append(PAGE_ID)
@@ -690,6 +693,16 @@ def main() -> None:
     renamed_files = normalize_existing_slug_paths(index)
     if renamed_files:
         print(f"Moved {renamed_files} files to collision-safe Notion IDs.", flush=True)
+    if REPAIR_COLLISIONS:
+        collision_pages = sorted(
+            (page_id for ids in COLLIDING_SLUG_IDS.values() for page_id in ids),
+            key=lambda page_id: (index[page_id].get("notion_order_path", ""), page_id),
+        )
+        selected_batch = collision_pages[COLLISION_OFFSET:COLLISION_OFFSET + COLLISION_BATCH_SIZE]
+        SELECTED_PAGE_IDS[:] = selected_batch
+        EXACT_PAGE_IDS.clear()
+        EXACT_PAGE_IDS.update(selected_batch)
+        print(f"Repairing slug collisions {COLLISION_OFFSET + 1}-{COLLISION_OFFSET + len(selected_batch)} of {len(collision_pages)} pages.", flush=True)
     remove_deleted_pages(old_pages, index)
     refresh_published_order(index)
     refresh_published_titles(index)
