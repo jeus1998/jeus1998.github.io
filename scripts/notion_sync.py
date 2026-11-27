@@ -339,12 +339,24 @@ def page_title(block: dict) -> str:
     kind = block.get("type")
     data = block.get(kind, {})
     if kind == "child_page":
-        return data.get("title", "제목 없음")
+        return strip_title_markdown(redact_secrets(data.get("title", "제목 없음")))
     props = block.get("properties", {})
     for prop in props.values():
         if isinstance(prop, dict) and prop.get("type") == "title":
-            return rich_text(prop.get("title", [])) or "제목 없음"
+            # Keep Notion emphasis as plain title text. Markdown syntax is not
+            # interpreted in Jekyll front matter, so emitting rich_text() here
+            # would expose literal ** and * characters in page headings.
+            value = "".join(redact_secrets(item.get("plain_text", ""))
+                            for item in prop.get("title", []))
+            return strip_title_markdown(value) or "제목 없음"
     return "제목 없음"
+
+
+def strip_title_markdown(value: str) -> str:
+    """Remove inline Markdown delimiters from titles stored as plain text."""
+    value = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", value)
+    value = re.sub(r"\*{1,3}|~{2}|`+", "", value)
+    return value
 
 
 def render_blocks(blocks: list[dict], depth: int = 0) -> str:
@@ -541,12 +553,43 @@ def normalize_existing_code_fences() -> int:
     return changed
 
 
+def normalize_existing_titles() -> int:
+    """Remove Markdown title delimiters from previously imported front matter."""
+    changed = 0
+    for path in [*POSTS.glob("*-notion-*.md"), *CATEGORIES.glob("notion-*.md")]:
+        content = path.read_text(encoding="utf-8")
+        updated_lines = []
+        file_changed = False
+        for line in content.splitlines():
+            match = re.match(r"^(title:\s*)(.+?)\s*$", line)
+            if not match:
+                updated_lines.append(line)
+                continue
+            raw_value = match.group(2)
+            try:
+                title = json.loads(raw_value)
+            except json.JSONDecodeError:
+                updated_lines.append(line)
+                continue
+            normalized = strip_title_markdown(title)
+            replacement = match.group(1) + yaml_quote(normalized)
+            updated_lines.append(replacement)
+            file_changed |= replacement != line
+        if file_changed:
+            path.write_text("\n".join(updated_lines) + "\n", encoding="utf-8")
+            changed += 1
+    return changed
+
+
 def main() -> None:
     POSTS.mkdir(exist_ok=True)
     CATEGORIES.mkdir(exist_ok=True)
     repaired_posts = normalize_existing_code_fences()
     if repaired_posts:
         print(f"Repaired plain-text code fences in {repaired_posts} imported posts.", flush=True)
+    normalized_titles = normalize_existing_titles()
+    if normalized_titles:
+        print(f"Removed Markdown delimiters from titles in {normalized_titles} imported files.", flush=True)
     old_state = load_state()
     old_pages = old_state.get("pages", {})
     index = build_page_index(old_pages)
