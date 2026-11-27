@@ -90,6 +90,6 @@ GitHub에서 직접 이미지 파일을 올릴 수도 있습니다. `assets/imag
 
 ## Study Record Notion 동기화
 
-공개된 [Study Record](https://parallel-shrine-c64.notion.site/Study-Record-d19bec251d44498c8c53ac994966d82d)의 하위 페이지를 블로그로 가져오는 동기화 도구를 준비했습니다. 현재 공개 페이지에서 확인되는 구조는 상위 분류 19개와 그 아래 페이지 링크 118개이며, 더 깊은 하위 페이지도 있습니다. 도구는 페이지 계층을 카테고리로 보존하고 Notion 페이지 ID를 기준으로 글을 갱신합니다. Notion에 업로드된 이미지는 저장소에 복사합니다.
+공개된 [Study Record](https://parallel-shrine-c64.notion.site/Study-Record-d19bec251d44498c8c53ac994966d82d)를 글 작성의 원본으로 사용합니다. GitHub Actions가 매시간 Notion 트리를 확인해 새 글, 수정·삭제, 이동, 분류와 순서 변경을 블로그에 반영합니다. 변경된 글의 본문과 이미지만 다시 읽도록 최적화되어 있으며, Notion의 페이지 계층과 형제 페이지 순서를 카테고리와 글 목록에 반영합니다.
 
-Notion 읽기 전용 통합을 `Study Record`에 연결하고 GitHub Actions secret `NOTION_API_KEY`를 등록한 뒤, Actions에서 기존 페이지를 하나씩 가져오면 됩니다. 가져온 글은 매시간 수정·추가·삭제를 확인하며, Notion 카테고리 계층도 블로그에 반영합니다. 단계별 사용법은 [Notion 동기화 안내](NOTION_SYNC.md)를 참고하세요. 동기화되는 글과 이미지는 공개 블로그에 게시됩니다.
+처음 전체 가져오기를 마치면 일상적인 글 작성과 편집은 Notion에서만 합니다. 동기화된 글을 CMS나 GitHub에서 편집하면 다음 실행에 Notion 내용으로 덮어씁니다. 동기화는 매시간 자동으로 실행되며, 필요하면 GitHub Actions에서 수동 실행할 수 있습니다. 실패 알림을 받으면 실행 링크와 오류 로그를 확인해 수정하면 됩니다. 설정, 동기화 범위와 장애 대응은 [Notion 동기화 안내](NOTION_SYNC.md)를 참고하세요. 동기화되는 글과 이미지는 공개 블로그에 게시됩니다.

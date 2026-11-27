@@ -40,9 +40,21 @@ SESSION.headers.update({"Authorization": f"Bearer {TOKEN}", "Notion-Version": VE
 def api(path: str, params: dict | None = None) -> dict:
     for attempt in range(6):
         time.sleep(0.35)
-        response = SESSION.get(f"{API}/{path}", params=params, timeout=60)
-        if response.status_code == 429:
-            time.sleep(int(response.headers.get("Retry-After", "2")))
+        try:
+            response = SESSION.get(f"{API}/{path}", params=params, timeout=60)
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            if attempt == 5:
+                raise
+            delay = min(2 ** attempt, 30)
+            print(f"Notion API request interrupted ({type(exc).__name__}); retrying in {delay}s.", flush=True)
+            time.sleep(delay)
+            continue
+        if response.status_code == 429 or response.status_code >= 500:
+            if attempt == 5:
+                response.raise_for_status()
+            delay = int(response.headers.get("Retry-After", str(min(2 ** attempt, 30))))
+            print(f"Temporary Notion API response {response.status_code}; retrying in {delay}s.", flush=True)
+            time.sleep(delay)
             continue
         response.raise_for_status()
         return response.json()
@@ -54,6 +66,9 @@ def search_pages() -> list[dict]:
     result: list[dict] = []
     cursor = None
     while True:
+        # Search returns active pages by default; trashed pages are only
+        # included when explicitly requested, so trashing a page is detected
+        # as a removal from the published tree.
         payload: dict = {"query": "", "filter": {"property": "object", "value": "page"}, "page_size": 100}
         if cursor:
             payload["start_cursor"] = cursor
@@ -131,7 +146,9 @@ def build_page_index(old_pages: dict[str, dict]) -> dict[str, dict]:
         ordered_children[parent_id] = found + [page_id for page_id in child_ids if page_id not in found]
 
     index: dict[str, dict] = {}
-    for page_id in included:
+    # A stable key order keeps the persisted state file unchanged when the
+    # Notion inventory itself has not changed.
+    for page_id in sorted(included):
         page = pages[page_id]
         parent_id = page_parent_id(page)
         index[page_id] = {
@@ -193,13 +210,23 @@ def remove_deleted_pages(old_pages: dict[str, dict], index: dict[str, dict]) -> 
         raise RuntimeError(f"Notion index lost {len(missing)} of {len(imported)} imported pages; refusing a mass deletion. Check integration access.")
     for page_id in missing:
         remove_post_for_page(page_id)
-        (CATEGORIES / f"notion-{slug_id(page_id)}.md").unlink(missing_ok=True)
+        remove_category_for_page(page_id)
+
+
+def remove_category_for_page(page_id: str) -> None:
+    """Remove a category by its stable Notion ID, even after slug expansion."""
+    normalized_id = page_id.replace("-", "").lower()
+    for category_file in CATEGORIES.glob("notion-*.md"):
+        if notion_id_from_file(category_file) == normalized_id:
+            category_file.unlink()
 
 
 def refresh_published_order(index: dict[str, dict]) -> None:
-    """Update ordering metadata on already published files without refetching their bodies."""
+    """Reconcile every published page's tree metadata without fetching bodies."""
     for category_file in CATEGORIES.glob("notion-*.md"):
-        page_id = category_file.stem.removeprefix("notion-")
+        page_id = notion_id_from_file(category_file)
+        if not page_id:
+            continue
         item = index.get(page_id)
         if item and (item["children"] or page_id == ROOT_ID.replace("-", "")):
             parent_id = item["parent_id"]
@@ -216,9 +243,14 @@ def refresh_published_order(index: dict[str, dict]) -> None:
         if not item:
             continue
         replacements = {
+            "title": yaml_quote(item["title"]),
+            "notion_path": yaml_quote(item["path"]),
             "notion_order": str(item["notion_order"]),
             "notion_order_path": yaml_quote(item["notion_order_path"]),
         }
+        categories, category_ids = page_categories(page_id, index)
+        replacements["categories"] = categories
+        replacements["notion_category_ids"] = category_ids
         for key, value in replacements.items():
             pattern = rf"^{key}:.*$"
             line = f"{key}: {value}"
@@ -229,26 +261,25 @@ def refresh_published_order(index: dict[str, dict]) -> None:
         post_path.write_text(content, encoding="utf-8")
 
 
-def refresh_published_titles(index: dict[str, dict]) -> None:
-    """Refresh title and breadcrumb metadata without re-fetching page bodies."""
-    for post_path in POSTS.glob("*-notion-*.md"):
-        content = post_path.read_text(encoding="utf-8")
-        match = re.search(r"^notion_id:\s*[\"']?([0-9a-f-]+)", content, flags=re.M)
-        if not match:
-            continue
-        page_id = match.group(1).replace("-", "").lower()
-        item = index.get(page_id)
-        if not item:
-            continue
-        replacements = {
-            "title": yaml_quote(item["title"]),
-            "notion_path": yaml_quote(item["path"]),
-        }
-        for key, value in replacements.items():
-            pattern = rf"^{key}:.*$"
-            line = f"{key}: {value}"
-            content = re.sub(pattern, lambda _, line=line: line, content, count=1, flags=re.M)
-        post_path.write_text(content, encoding="utf-8")
+def page_categories(page_id: str, index: dict[str, dict]) -> tuple[str, str]:
+    """Return Jekyll's stable URL category and the full Notion category path."""
+    root_id = ROOT_ID.replace("-", "")
+    ancestor_ids = [item[1]["id"] for item in page_ancestors(page_id, index)]
+    category_ids = [ancestor_id for ancestor_id in ancestor_ids
+                    if index[ancestor_id]["children"] or ancestor_id == root_id]
+    if index[page_id]["children"] and page_id != root_id:
+        category_ids.append(page_id)
+
+    category_ancestors = [ancestor_id for ancestor_id in ancestor_ids
+                          if index[ancestor_id]["children"] or ancestor_id == root_id]
+    if category_ancestors:
+        direct_category_id = category_ancestors[1] if len(category_ancestors) > 1 else category_ancestors[0]
+        direct_category = index[direct_category_id]["title"]
+    else:
+        direct_category = index[page_id]["title"]
+    categories = "[" + yaml_quote(direct_category) + "]"
+    category_id_values = "[" + ", ".join(yaml_quote(value) for value in category_ids) + "]"
+    return categories, category_id_values
 
 
 def cleanup_orphan_media() -> None:
@@ -574,7 +605,6 @@ def save_category(page: dict, title: str, parent_id: str = "", notion_order: int
 seen: set[str] = set()
 written: set[Path] = set()
 written_media: set[Path] = set()
-category_titles: set[str] = set()
 written_categories: set[Path] = set()
 COLLIDING_SLUG_IDS: dict[str, set[str]] = {}
 SHORT_SLUG_KEEPERS: dict[str, str] = {}
@@ -598,7 +628,6 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[
         index_item = index[page_id]
         save_category(page_record, title, parents[-1][1]["id"] if parents else "",
                       index_item["notion_order"], index_item["children"])
-        category_titles.add(title)
         written_categories.add(CATEGORIES / f"notion-{slug_id(page_id)}.md")
 
     body = redact_secrets(render_blocks(blocks))
@@ -607,15 +636,8 @@ def walk(page_id: str, title: str, parents: list[tuple[str, dict]], index: dict[
         created = page.get("created_time", "2026-01-01T00:00:00Z")
         day, date = safe_date(created)
         post_path = POSTS / f"{day}-notion-{slug_id(page_id)}.md"
-        ancestors = [item for item in parents if item[0] in category_titles]
-        # Keep the top-level category in Jekyll's permalink for URL stability.
-        direct_category = [ancestors[1][0] if len(ancestors) > 1 else (ancestors[0][0] if ancestors else title)]
-        notion_category_ids = [item[1]["id"] for item in parents if item[0] in category_titles]
-        if subpages and title in category_titles:
-            notion_category_ids.append(page_id)
-        categories_yaml = "[" + ", ".join(yaml_quote(item) for item in direct_category) + "]"
         breadcrumb = " / ".join([item[0] for item in parents] + [title])
-        category_ids_yaml = "[" + ", ".join(yaml_quote(item) for item in notion_category_ids) + "]"
+        categories_yaml, category_ids_yaml = page_categories(page_id, index)
         front = ["---", "layout: post", f"title: {yaml_quote(title)}", f"date: {date}",
                  f"categories: {categories_yaml}", "tags: [Notion 가져오기]",
                  f"description: {yaml_quote('Study Record에서 가져온 기록입니다.')}",
@@ -705,7 +727,6 @@ def main() -> None:
         print(f"Repairing slug collisions {COLLISION_OFFSET + 1}-{COLLISION_OFFSET + len(selected_batch)} of {len(collision_pages)} pages.", flush=True)
     remove_deleted_pages(old_pages, index)
     refresh_published_order(index)
-    refresh_published_titles(index)
 
     # Every manual or scheduled run updates the parent-child index. A first
     # manual run establishes a baseline without importing the whole workspace.
@@ -723,36 +744,36 @@ def main() -> None:
         root_id = ROOT_ID.replace("-", "")
         root = index[root_id]
         save_category({"id": root_id}, root["title"], notion_order=0, child_ids=root["children"])
-        category_titles.add(root["title"])
         written_categories.add(CATEGORIES / f"notion-{slug_id(root_id)}.md")
 
-    candidates = set()
+    # A Notion page is a post of its own. Its child_page blocks define tree
+    # structure, but their content is not embedded in the parent's post body.
+    # Therefore a body edit only needs that page; new explicitly selected
+    # subtrees are the only cases that recurse through descendants.
+    candidates: dict[str, bool] = {}
     for selected_id in SELECTED_PAGE_IDS:
-        candidates.add(selected_id)
-        if selected_id not in EXACT_PAGE_IDS:
-            candidates.update(page_id for page_id in index if selected_id in {a[1]["id"] for a in page_ancestors(page_id, index)})
+        candidates[selected_id] = selected_id not in EXACT_PAGE_IDS
     if old_pages:
         for page_id, item in index.items():
             previous = old_pages.get(page_id)
-            children_changed = set(previous.get("children", [])) != set(item["children"]) if previous else True
-            if previous is None or (previous.get("imported") and (
-                    children_changed or any(previous.get(key) != item.get(key)
-                                            for key in ("parent_id", "last_edited_time")))):
-                candidates.add(page_id)
-                # Child page bodies are also rendered inside their parent page,
-                # so refresh imported ancestors when a descendant changes.
-                for ancestor_title, ancestor in page_ancestors(page_id, index):
-                    ancestor_id = ancestor["id"]
-                    if old_pages.get(ancestor_id, {}).get("imported"):
-                        candidates.add(ancestor_id)
+            if previous is None:
+                # Added pages are each selected directly. This also handles a
+                # new subtree without refetching already-published siblings.
+                candidates.setdefault(page_id, False)
+            elif previous.get("imported") and any(
+                    previous.get(key) != item.get(key)
+                    for key in ("parent_id", "last_edited_time", "title")):
+                candidates.setdefault(page_id, False)
 
-    # Import only the topmost candidate in each changed subtree. New pages
-    # are discovered automatically; existing unimported pages stay staged.
-    roots = [page_id for page_id in candidates if not any(
-        ancestor[1]["id"] in candidates and ancestor[1]["id"] not in EXACT_PAGE_IDS
-        for ancestor in page_ancestors(page_id, index)
-    )]
-    for page_id in roots:
+    # Suppress descendants only when an explicitly selected recursive root
+    # already covers them. Automatic changes are synchronized page by page.
+    roots = {
+        page_id: recurse for page_id, recurse in candidates.items()
+        if not any(candidates.get(ancestor[1]["id"], False)
+                   for ancestor in page_ancestors(page_id, index))
+    }
+    print(f"Notion index: {len(index)} pages; refreshing {len(roots)} page groups.", flush=True)
+    for page_id, recurse in roots.items():
         ancestors = page_ancestors(page_id, index)
         for i, (ancestor_title, ancestor) in enumerate(ancestors):
             ancestor_id = ancestor["id"]
@@ -761,19 +782,18 @@ def main() -> None:
                 ancestor_item = index[ancestor_id]
                 save_category(ancestor, ancestor_title, parent_id,
                               ancestor_item["notion_order"], ancestor_item["children"])
-                category_titles.add(ancestor_title)
                 written_categories.add(CATEGORIES / f"notion-{slug_id(ancestor_id)}.md")
         page = api(f"pages/{page_id}")
-        walk(page_id, page_title(page), ancestors, index, recurse=page_id not in EXACT_PAGE_IDS)
+        walk(page_id, page_title(page), ancestors, index, recurse=recurse)
 
     # Save the complete inventory, preserving the staged-import flag.
     for page_id, item in index.items():
         item["imported"] = bool(old_pages.get(page_id, {}).get("imported")) or any(
-            page_id == root or (root not in EXACT_PAGE_IDS and root in {a[1]["id"] for a in page_ancestors(page_id, index)})
-            for root in roots
+            page_id == root or (recurse and root in {a[1]["id"] for a in page_ancestors(page_id, index)})
+            for root, recurse in roots.items()
         )
     for category_file in CATEGORIES.glob("notion-*.md"):
-        category_id = category_file.stem.removeprefix("notion-")
+        category_id = notion_id_from_file(category_file)
         if category_id in index and not index[category_id]["children"] and category_id != ROOT_ID.replace("-", ""):
             category_file.unlink()
     save_state(index)
