@@ -106,3 +106,12 @@
 .prose table{display:block;width:max-content;max-width:100%;overflow-x:auto;border-collapse:collapse;font-size:13px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
 .prose th,.prose td{padding:7px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
 @media(max-width:700px){.article-header h1{font-size:clamp(26px,7vw,34px)}.prose{font-size:13px;line-height:1.7}.prose h2{font-size:18px}.prose h3{font-size:15px}.prose img{max-height:min(40vh,360px)}.prose pre{max-height:50vh;padding:10px 11px;font-size:11px}}
+
+.post-pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:26px 0 8px}
+.page-button{min-width:40px;height:40px;padding:0 11px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.page-button:hover:not(:disabled){border-color:#a7b9a7;color:var(--green)}
+.page-button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.page-button:disabled{color:#a5aca5;background:#f5f6f4;cursor:default}
+.page-button.is-current{border-color:var(--green);background:var(--green);color:#fff}
+.page-gap{padding:0 3px;color:var(--muted)}
+@media(max-width:480px){.post-pagination{gap:4px}.page-button{min-width:36px;height:38px;padding:0 8px}}

@@ -23,12 +23,13 @@ title: 홈
     <div><p class="eyebrow">BROWSE BY CATEGORY</p><h2>주제별로 기록 보기</h2><p>상위 분류와 하위 분류를 따라 관심 있는 글을 찾아보세요.</p></div>
     <a href="{{ '/categories/' | relative_url }}">전체 카테고리 보기 <span aria-hidden="true">→</span></a>
   </section>
-  <div class="section-heading post-results-heading"><h2>모든 글</h2><span class="post-count" data-post-count>{{ site.posts.size }}개의 글</span></div>
-  <div class="post-list" data-post-list>
+  <div class="section-heading post-results-heading"><h2>모든 글</h2><span class="post-count" data-post-count aria-live="polite">{{ site.posts.size }}개의 글</span></div>
+  <div class="post-list" data-post-list data-post-pagination data-page-size="10">
     {% for post in site.posts %}
       {% include post-row.html post=post %}
     {% endfor %}
   </div>
   <p class="empty-state" data-no-results hidden>검색 결과가 없습니다. 다른 검색어를 입력해 보세요.</p>
+  <nav class="post-pagination" aria-label="글 목록 페이지" data-pagination hidden></nav>
 </section>
 <section class="note-card"><span class="note-icon" aria-hidden="true">✳</span><div><p class="eyebrow">A SMALL REMINDER</p><p>완벽한 글보다, 계속 쓰는 기록.</p></div><span class="note-spark" aria-hidden="true">✦</span></section>
