@@ -11253,30 +11253,6 @@
       "notion_order_path": "000000.000014.000000.000003",
       "imported": true
     },
-    "4257d6692ca880768ca2cb45287e45f7": {
-      "title": "[동기화 테스트] 부모 루트",
-      "parent_id": "d19bec251d44498c8c53ac994966d82d",
-      "children": [
-        "4257d6692ca880a6a802edd884503285"
-      ],
-      "children_order_checked": true,
-      "last_edited_time": "2026-11-27T11:21:00.000Z",
-      "notion_order": 19,
-      "path": "Study Record / [동기화 테스트] 부모 루트",
-      "notion_order_path": "000000.000019",
-      "imported": true
-    },
-    "4257d6692ca880a6a802edd884503285": {
-      "title": "[테스트] 자식 노드",
-      "parent_id": "4257d6692ca880768ca2cb45287e45f7",
-      "children": [],
-      "children_order_checked": true,
-      "last_edited_time": "2026-11-27T11:20:00.000Z",
-      "notion_order": 0,
-      "path": "Study Record / [동기화 테스트] 부모 루트 / [테스트] 자식 노드",
-      "notion_order_path": "000000.000019.000000",
-      "imported": true
-    },
     "d19bec251d44498c8c53ac994966d82d": {
       "title": "Study Record",
       "parent_id": "",
@@ -11299,11 +11275,10 @@
         "27e7d6692ca880359c78c7e1a11bf1f8",
         "2e07d6692ca88075a442ec92e5c29c7d",
         "2f77d6692ca880d3ac4cf1bf958c77e7",
-        "3bf7d6692ca88026bfdac8291698151c",
-        "4257d6692ca880768ca2cb45287e45f7"
+        "3bf7d6692ca88026bfdac8291698151c"
       ],
       "children_order_checked": true,
-      "last_edited_time": "2026-11-27T11:18:00.000Z",
+      "last_edited_time": "2026-11-28T02:21:00.000Z",
       "notion_order": 0,
       "path": "Study Record",
       "notion_order_path": "000000",
